@@ -460,7 +460,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Built with dedication at ETH Denver 2026**
 
 [Website](https://narrativevaults.xyz) | [Twitter](https://twitter.com/narrativevaults) | [Discord](https://discord.gg/narrativevaults)
 

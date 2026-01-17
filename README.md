@@ -46,32 +46,6 @@ While pair trading is one of the most sophisticated trading strategies used by h
 
 Narrative Vaults is a **decentralized trading platform** that transforms pair trading into an engaging, gamified experience. Users deposit into narrative-based vaults that execute automated pair trades on Hyperliquid, earning XP and leveling up to unlock advanced trading strategies.
 
-### 🆕 Recent Updates
-
-**Version 0.1.0** (January 15, 2025)
-
-#### Added Features
-- ✅ **Pear Protocol SDK Integration**: Seamless automated pair trade execution through official SDK
-- ✅ **Smart Contract Integration**: Salt Protocol for access control and risk management
-- ✅ **XP & Leveling System**: Gamified user progression tracking with achievements
-- ✅ **Multiple Narrative Strategies**: AI, DeFi, GameFi, Layer 1, and Layer 2 narratives
-- ✅ **Real-time WebSocket Connections**: Live trading updates and P&L tracking
-- ✅ **User Dashboard**: Portfolio analytics and position tracking
-- ✅ **Social Leaderboards**: Compete with other traders for rankings
-- ✅ **Risk Management**: Automatic drawdown protection through Salt policies
-
-#### Security Enhancements
-- 🔐 Salt Protocol security policies implementation
-- 🔐 API key encryption for exchange credentials
-- 🔐 Rate limiting on all API endpoints
-- 🔐 Input validation and sanitization
-
-#### Documentation
-- 📚 Comprehensive README with project overview
-- 📚 Architecture documentation with system diagrams
-- 📚 API documentation with endpoint specifications
-- 📚 Contributing guidelines and security policy
-
 ### 🎯 What Makes It Special?
 
 - **📊 Narrative-Based Trading**: Trade market themes like "AI vs Memes", "SOL vs ETH", or "DeFi vs GameFi"
@@ -501,6 +475,34 @@ npm run lint      # Run ESLint
 - ✅ TypeScript strict mode enabled
 - ✅ ESLint + Prettier for code formatting
 - ✅ Conventional commits for version control
+
+---
+
+### 🆕 Recent Updates
+
+**Version 0.1.0** (January 15, 2025)
+
+#### Added Features
+- ✅ **Pear Protocol SDK Integration**: Seamless automated pair trade execution through official SDK
+- ✅ **Smart Contract Integration**: Salt Protocol for access control and risk management
+- ✅ **XP & Leveling System**: Gamified user progression tracking with achievements
+- ✅ **Multiple Narrative Strategies**: AI, DeFi, GameFi, Layer 1, and Layer 2 narratives
+- ✅ **Real-time WebSocket Connections**: Live trading updates and P&L tracking
+- ✅ **User Dashboard**: Portfolio analytics and position tracking
+- ✅ **Social Leaderboards**: Compete with other traders for rankings
+- ✅ **Risk Management**: Automatic drawdown protection through Salt policies
+
+#### Security Enhancements
+- 🔐 Salt Protocol security policies implementation
+- 🔐 API key encryption for exchange credentials
+- 🔐 Rate limiting on all API endpoints
+- 🔐 Input validation and sanitization
+
+#### Documentation
+- 📚 Comprehensive README with project overview
+- 📚 Architecture documentation with system diagrams
+- 📚 API documentation with endpoint specifications
+- 📚 Contributing guidelines and security policy
 
 ---
 

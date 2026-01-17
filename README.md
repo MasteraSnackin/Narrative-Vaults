@@ -406,7 +406,7 @@ Contributions are welcome! Please follow these steps:
 
 ## 🚀 Built For
 
-**ETH Denver 2026 Hackathon**
+
 
 Narrative Vaults was built to showcase the power of combining:
 - Salt Protocol's programmable capital
@@ -423,7 +423,6 @@ Special thanks to:
 - **[Salt Protocol](https://salt.xyz/)** - Programmable capital infrastructure
 - **[Pear Protocol](https://pear.garden/)** - Pair trading execution API
 - **[Hyperliquid](https://hyperliquid.xyz/)** - High-performance perpetual DEX
-- **[ETH Denver](https://ethdenver.com/)** - For hosting this amazing hackathon
 
 ---
 

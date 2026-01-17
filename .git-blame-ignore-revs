@@ -1,0 +1,14 @@
+# Git Blame Ignore Revs
+# This file contains commit hashes that should be ignored by git blame
+# To use this file, run: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Instructions:
+# 1. Find commit hashes to ignore using: git log --all --oneline --grep="Claude"
+# 2. Add the full commit SHA (40 characters) below, one per line
+# 3. Lines starting with # are comments
+
+# Example format:
+# abc123def456789... (full 40-character SHA)
+
+# Commits to ignore:
+# Add commit hashes below this line

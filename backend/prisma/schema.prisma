@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(uuid())
+  wallet_address String          @unique @db.VarChar(42)
+  total_xp       Int             @default(0)
+  current_level  Int             @default(1)
+  referral_code  String?         @unique @db.VarChar(8)
+  referred_by    User?           @relation("ReferredUsers", fields: [referred_by_id], references: [id])
+  referred_by_id String?         @map("referred_by")
+  created_at     DateTime        @default(now())
+  VaultPositions VaultPosition[]
+  XPEvents       XPEvent[]
+  ReferredUsers  User[]          @relation("ReferredUsers")
+
+  @@map("users")
+}
+
+model Vault {
+  id                   String          @id @default(uuid())
+  narrative_id         String          @db.VarChar(50)
+  salt_account_address String?         @unique @db.VarChar(42)
+  total_deposits       Decimal         @default(0) @db.Decimal(18, 6)
+  current_pnl          Decimal         @default(0) @db.Decimal(18, 6)
+  active_position_id   String?         @db.VarChar(100)
+  status               String          @default("active") @db.VarChar(20)
+  created_at           DateTime        @default(now())
+  VaultPositions       VaultPosition[]
+  Trades               Trade[]
+  RiskEvents           RiskEvent[]
+  XPEvents             XPEvent[]
+
+  @@map("vaults")
+}
+
+model VaultPosition {
+  id           String    @id @default(uuid())
+  user_id      String
+  vault_id     String
+  deposit_amount Decimal   @db.Decimal(18, 6)
+  share_tokens   Decimal   @db.Decimal(18, 6)
+  entry_pnl      Decimal   @default(0) @db.Decimal(18, 6)
+  deposited_at   DateTime  @default(now())
+  withdrawn_at   DateTime?
+  user         User      @relation(fields: [user_id], references: [id])
+  vault        Vault     @relation(fields: [vault_id], references: [id])
+
+  @@map("vault_positions")
+}
+
+model Trade {
+  id            String    @id @default(uuid())
+  vault_id      String
+  pear_trade_id String    @unique @db.VarChar(100)
+  narrative_id  String    @db.VarChar(50)
+  long_tokens   String[]
+  short_tokens  String[]
+  leverage      Decimal   @db.Decimal(3, 2)
+  entry_value   Decimal   @db.Decimal(18, 6)
+  current_value Decimal?  @db.Decimal(18, 6)
+  realized_pnl  Decimal?  @db.Decimal(18, 6)
+  status        String    @db.VarChar(20)
+  opened_at     DateTime  @default(now())
+  closed_at     DateTime?
+  vault         Vault     @relation(fields: [vault_id], references: [id])
+
+  @@map("trades")
+}
+
+model XPEvent {
+  id          String    @id @default(uuid())
+  user_id     String
+  vault_id    String?
+  xp_earned   Int
+  event_type  String    @db.VarChar(50)
+  description String?
+  created_at  DateTime  @default(now())
+  user        User      @relation(fields: [user_id], references: [id])
+  vault       Vault?    @relation(fields: [vault_id], references: [id])
+
+  @@map("xp_events")
+}
+
+model RiskEvent {
+  id                   String    @id @default(uuid())
+  vault_id             String
+  event_type           String    @db.VarChar(50)
+  current_drawdown     Decimal   @db.Decimal(5, 2)
+  max_allowed_drawdown Decimal   @db.Decimal(5, 2)
+  action_taken         String    @db.VarChar(100)
+  created_at           DateTime  @default(now())
+  vault                Vault     @relation(fields: [vault_id], references: [id])
+
+  @@map("risk_events")
+}

@@ -55,8 +55,6 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 - **🏆 Social Leaderboards**: Compete with other traders for top rankings
 - **🔐 Non-Custodial**: Your funds, your control - trade through policy-enforced accounts
 
-![narrative-vaults-architecture](https://private-user-images.githubusercontent.com/39118622/537143863-a6dd3eca-b812-4041-afe7-bb2ea179aa63.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3Njg2NjE3NDUsIm5iZiI6MTc2ODY2MTQ0NSwicGF0aCI6Ii8zOTExODYyMi81MzcxNDM4NjMtYTZkZDNlY2EtYjgxMi00MDQxLWFmZTctYmIyZWExNzlhYTYzLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjAxMTclMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwMTE3VDE0NTA0NVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBkNzlmMTkxYWNiYzBjMjM1NjU3NTczNGEyZWYzNzY0ZThkMDljNDI1Mjg2ZTFkNWQyMjE4ZTY0YTgwN2FkOGImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.y6cEDbpGatOYEh8C6O_0HyAHPgjnFpbEHF_SPXIg0Ug)
-
 ## ⚙️ How It Works
 
 **Simple 3-Step Process:**

@@ -12,6 +12,62 @@
 
 **🎮 A Gamified Pair Trading Platform for Market Narratives**
 
+
+## ⚙️ How It Works
+
+**Simple 3-Step Process:**
+
+1️⃣ **One-Click Deposit** 💰
+   - Users deposit funds with a single click
+   - Funds are allocated to a Salt Policy Account for secure trading
+
+2️⃣ **Automated Trading** 🤖
+   - Agent Loop runs every 30 seconds, monitoring market conditions
+   - Pear API executes pair trades automatically on Hyperliquid
+   - Salt Protocol enforces risk limits and protects your capital
+
+3️⃣ **Earn & Level Up** 🎮
+   - Profitable trades earn XP
+   - Level up to unlock advanced narratives with higher leverage
+   - Track progress on social leaderboards
+
+**Technical Architecture Flow:**
+
+```
+👥 User Deposit → 🛡️ Salt Policy Account → 🎲 Hyperliquid
+                     ↓                      ↑
+            ⏰ Agent Loop (30s)    ←  🍍 Pear API
+```
+
+**Key Components:**
+- ✅ **Salt Protocol**: Enforces risk limits and automatic liquidation on breach
+- ✅ **Pear Protocol SDK**: Executes pair/basket trades seamlessly  
+- ✅ **Hyperliquid**: High-performance perpetual DEX for trade settlement
+- ✅ **Automated Agent**: 30-second loop for real-time market response
+
+## 🎯 Why Choose Narrative Vaults?
+
+**✅ Accessible**
+- No complex setup or technical knowledge required
+- One-click deposit to start trading narratives
+- User-friendly dashboard for all experience levels
+
+**🛡️ Safe**
+- Non-custodial: Your funds, your control
+- Salt Protocol security policies enforce risk limits
+- Automatic drawdown protection prevents catastrophic losses
+- Rate limiting and input validation on all endpoints
+
+**🎮 Engaging**
+- Gamified XP system makes trading fun and rewarding  
+- Level progression unlocks new strategies
+- Social leaderboards foster friendly competition
+- Real-time updates keep you in the action
+
+**📊 Real Volume**
+- All trades execute on Hyperliquid with actual liquidity
+- Transparent on-chain settlement
+- No paper trading – real profits from real markets
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MasteraSnackin/Narrative-Vaults/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
@@ -22,6 +78,18 @@
 </div>
 
 ---
+
+## 😩 The Problem
+
+**Pair Trading is Powerful But Complex**
+
+While pair trading is one of the most sophisticated trading strategies used by hedge funds and institutional investors, it remains largely inaccessible to retail traders:
+
+- ❌ **Requires managing multiple positions**: Coordinating long and short positions across different assets is technically challenging
+- ❌ **Understand narratives but can't execute**: Traders see market opportunities but lack the tools to act on them efficiently  
+- ❌ **Most retail traders never attempt it**: The complexity barrier prevents 95% of retail traders from using this proven strategy
+
+**Our Solution: Narrative Vaults makes pair trading as simple as a single click** 🚀
 
 ## 🌟 Overview
 

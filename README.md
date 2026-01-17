@@ -12,68 +12,14 @@
 
 **🎮 A Gamified Pair Trading Platform for Market Narratives**
 
-
-## ⚙️ How It Works
-
-**Simple 3-Step Process:**
-
-1️⃣ **One-Click Deposit** 💰
-   - Users deposit funds with a single click
-   - Funds are allocated to a Salt Policy Account for secure trading
-
-2️⃣ **Automated Trading** 🤖
-   - Agent Loop runs every 30 seconds, monitoring market conditions
-   - Pear API executes pair trades automatically on Hyperliquid
-   - Salt Protocol enforces risk limits and protects your capital
-
-3️⃣ **Earn & Level Up** 🎮
-   - Profitable trades earn XP
-   - Level up to unlock advanced narratives with higher leverage
-   - Track progress on social leaderboards
-
-**Technical Architecture Flow:**
-
-```
-👥 User Deposit → 🛡️ Salt Policy Account → 🎲 Hyperliquid
-                     ↓                      ↑
-            ⏰ Agent Loop (30s)    ←  🍍 Pear API
-```
-
-**Key Components:**
-- ✅ **Salt Protocol**: Enforces risk limits and automatic liquidation on breach
-- ✅ **Pear Protocol SDK**: Executes pair/basket trades seamlessly  
-- ✅ **Hyperliquid**: High-performance perpetual DEX for trade settlement
-- ✅ **Automated Agent**: 30-second loop for real-time market response
-
-## 🎯 Why Choose Narrative Vaults?
-
-**✅ Accessible**
-- No complex setup or technical knowledge required
-- One-click deposit to start trading narratives
-- User-friendly dashboard for all experience levels
-
-**🛡️ Safe**
-- Non-custodial: Your funds, your control
-- Salt Protocol security policies enforce risk limits
-- Automatic drawdown protection prevents catastrophic losses
-- Rate limiting and input validation on all endpoints
-
-**🎮 Engaging**
-- Gamified XP system makes trading fun and rewarding  
-- Level progression unlocks new strategies
-- Social leaderboards foster friendly competition
-- Real-time updates keep you in the action
-
-**📊 Real Volume**
-- All trades execute on Hyperliquid with actual liquidity
-- Transparent on-chain settlement
-- No paper trading – real profits from real markets
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MasteraSnackin/Narrative-Vaults/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
 
 [Demo](https://narrativevaults.xyz/) | [Documentation](docs/ARCHITECTURE.md) | [API Reference](docs/API_DOCS.md)
+
+
 
 </div>
 
@@ -129,6 +75,66 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 - **⚡ Real-Time Updates**: Live P&L tracking via WebSocket connections
 - **🏆 Social Leaderboards**: Compete with other traders for top rankings
 - **🔐 Non-Custodial**: Your funds, your control - trade through policy-enforced accounts
+
+![narrative-vaults-architecture](https://private-user-images.githubusercontent.com/39118622/537143863-a6dd3eca-b812-4041-afe7-bb2ea179aa63.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3Njg2NjE3NDUsIm5iZiI6MTc2ODY2MTQ0NSwicGF0aCI6Ii8zOTExODYyMi81MzcxNDM4NjMtYTZkZDNlY2EtYjgxMi00MDQxLWFmZTctYmIyZWExNzlhYTYzLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjAxMTclMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwMTE3VDE0NTA0NVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBkNzlmMTkxYWNiYzBjMjM1NjU3NTczNGEyZWYzNzY0ZThkMDljNDI1Mjg2ZTFkNWQyMjE4ZTY0YTgwN2FkOGImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.y6cEDbpGatOYEh8C6O_0HyAHPgjnFpbEHF_SPXIg0Ug)
+
+## ⚙️ How It Works
+
+**Simple 3-Step Process:**
+
+1️⃣ **One-Click Deposit** 💰
+- Users deposit funds with a single click
+- Funds are allocated to a Salt Policy Account for secure trading
+
+2️⃣ **Automated Trading** 🤖
+- Agent Loop runs every 30 seconds, monitoring market conditions
+- Pear API executes pair trades automatically on Hyperliquid
+- Salt Protocol enforces risk limits and protects your capital
+
+3️⃣ **Earn & Level Up** 🎮
+- Profitable trades earn XP
+- Level up to unlock advanced narratives with higher leverage
+- Track progress on social leaderboards
+
+**Technical Architecture Flow:**
+
+```
+👥 User Deposit → 🛡️ Salt Policy Account → 🎲 Hyperliquid
+                     ↓                      ↑
+            ⏰ Agent Loop (30s)    ←  🍍 Pear API
+```
+
+**Key Components:**
+- ✅ **Salt Protocol**: Enforces risk limits and automatic liquidation on breach
+- ✅ **Pear Protocol SDK**: Executes pair/basket trades seamlessly  
+- ✅ **Hyperliquid**: High-performance perpetual DEX for trade settlement
+- ✅ **Automated Agent**: 30-second loop for real-time market response
+
+## 🎯 Why Choose Narrative Vaults?
+
+**✅ Accessible**
+- No complex setup or technical knowledge required
+- One-click deposit to start trading narratives
+- User-friendly dashboard for all experience levels
+
+**🛡️ Safe**
+- Non-custodial: Your funds, your control
+- Salt Protocol security policies enforce risk limits
+- Automatic drawdown protection prevents catastrophic losses
+- Rate limiting and input validation on all endpoints
+
+**🎮 Engaging**
+- Gamified XP system makes trading fun and rewarding  
+- Level progression unlocks new strategies
+- Social leaderboards foster friendly competition
+- Real-time updates keep you in the action
+
+**📊 Real Volume**
+- All trades execute on Hyperliquid with actual liquidity
+- Transparent on-chain settlement
+- No paper trading – real profits from real markets
+
+---
 
 <img width="1024" height="1024" alt="9e530d87-d9eb-4ab7-8028-6c71f65a2881" src="https://github.com/user-attachments/assets/a6dd3eca-b812-4041-afe7-bb2ea179aa63" />
 

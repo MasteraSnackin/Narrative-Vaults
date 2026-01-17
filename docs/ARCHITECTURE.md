@@ -1068,5 +1068,3 @@ The platform leverages modern web technologies, blockchain integrations, and aut
 - [API Documentation](API_DOCS.md)
 - [Setup Guide](../README.md#getting-started)
 - [Contributing Guidelines](../CONTRIBUTING.md)
-
-**Built with ❤️ for ETH Denver 2026**

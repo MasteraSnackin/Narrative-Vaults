@@ -1,397 +1,842 @@
-# Narrative Vaults - Project Architecture Document
+# 🏛️ Narrative Vaults - Project Architecture Document
+
+## Table of Contents
+
+- [1. System Overview](#1-system-overview)
+- [2. System Architecture](#2-system-architecture)
+- [3. Component Breakdown](#3-component-breakdown)
+- [4. Data Flow Diagrams](#4-data-flow-diagrams)
+- [5. Sequence Diagrams](#5-sequence-diagrams)
+- [6. Database Schema](#6-database-schema)
+- [7. API Integration Specifications](#7-api-integration-specifications)
+- [8. Backend Agent Logic](#8-backend-agent-logic)
+- [9. Security & Risk Management](#9-security--risk-management)
+- [10. Deployment Strategy](#10-deployment-strategy)
+
+---
 
 ## 1. System Overview
 
-Narrative Vaults is a gamified decentralized trading platform that allows users to participate in pair and basket trades based on market narratives without managing individual trading legs. It leverages the Pear Protocol for trade execution on Hyperliquid and Salt Programmable Capital for policy-controlled vaults and risk management.
+Narrative Vaults is a gamified decentralized trading platform that allows users to participate in pair and basket trades based on market narratives without managing individual trading legs. It leverages three core protocols:
 
-### Architecture Diagram
+- **Pear Protocol**: For trade execution (pair/basket trading)
+- **Hyperliquid**: Perpetual DEX for trade settlement
+- **Salt Programmable Capital**: Policy-controlled vaults and risk management
+
+### Key Features
+
+- 🎮 **Gamified Trading**: XP system with level progression
+- 🛡️ **Automated Risk Management**: Salt-powered policy enforcement
+- ⚡ **Real-time Updates**: WebSocket-based live P&L tracking
+- 📈 **Narrative-Based Trading**: Trade market themes, not individual tokens
+
+---
+
+## 2. System Architecture
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        User[User Wallet]
+        Browser[Web Browser]
+    end
+
+    subgraph Frontend["Frontend Layer - Next.js 14"]
+        UI[UI Components]
+        State[State Management<br/>React Query + Zustand]
+        Web3[Web3 Integration<br/>wagmi + viem]
+    end
+
+    subgraph Backend["Backend Layer - Node.js"]
+        API[REST API<br/>Express]
+        WS[WebSocket Server]
+        Agent[Agent Loop<br/>Cron Jobs]
+        Queue[Bull Queue]
+    end
+
+    subgraph Services["Service Layer"]
+        PearSvc[Pear Service]
+        SaltSvc[Salt Service]
+        HyperSvc[Hyperliquid Service]
+        XPSvc[XP Service]
+    end
+
+    subgraph Data["Data Layer"]
+        DB[(PostgreSQL<br/>Prisma ORM)]
+        Cache[(Redis<br/>Cache/Queue)]
+    end
+
+    subgraph External["External Protocols"]
+        Pear[Pear Protocol<br/>Execution API]
+        Salt[Salt SDK<br/>Policy Accounts]
+        Hyper[Hyperliquid<br/>Perp DEX]
+    end
+
+    User --> Browser
+    Browser --> UI
+    UI --> State
+    State --> Web3
+    UI <--> API
+    UI <--> WS
+    
+    API --> PearSvc
+    API --> SaltSvc
+    API --> XPSvc
+    Agent --> PearSvc
+    Agent --> SaltSvc
+    Agent --> HyperSvc
+    
+    PearSvc --> Pear
+    SaltSvc --> Salt
+    HyperSvc --> Hyper
+    
+    API --> DB
+    Agent --> DB
+    API --> Cache
+    Agent --> Cache
+    Queue --> Cache
+    
+    Pear --> Hyper
+    Salt --> Hyper
+    
+    WS -.Real-time Updates.-> UI
+
+    style Client fill:#e1f5ff
+    style Frontend fill:#fff4e1
+    style Backend fill:#ffe1f5
+    style Services fill:#f5e1ff
+    style Data fill:#e1ffe1
+    style External fill:#ffe1e1
+```
+
+### Component Layer Diagram
+
+```mermaid
+graph LR
+    subgraph Presentation
+        A[Pages]
+        B[Components]
+        C[Hooks]
+    end
+    
+    subgraph Business
+        D[API Routes]
+        E[Services]
+        F[Agent Logic]
+    end
+    
+    subgraph DataAccess
+        G[Prisma ORM]
+        H[Redis Client]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    E --> G
+    F --> G
+    F --> H
+```
+
+---
+
+## 3. Component Breakdown
+
+### 3.1. Frontend (Next.js 14, TypeScript)
+
+**Stack:**
+- Framework: Next.js 14 with App Router
+- Language: TypeScript
+- Styling: TailwindCSS
+- Web3: wagmi + viem
+- State Management:
+  - Server State: React Query (TanStack Query)
+  - Client State: Zustand
+- Real-time: WebSocket client
+- Charts: lightweight-charts
+
+**Key Components:**
+
+| Component | Purpose | Props |
+|-----------|---------|-------|
+| `VaultCard.tsx` | Display narrative vault info | `narrative`, `currentPnL`, `tvl`, `isLocked` |
+| `XPProgressBar.tsx` | Visualize XP progress | `currentXP`, `currentLevel`, `nextLevelThreshold` |
+| `LivePnLChart.tsx` | Real-time P&L chart | `vaultId`, `websocketEndpoint` |
+| `DepositModal.tsx` | Handle deposits | `narrative`, `onDeposit`, `userBalance` |
+| `WalletConnectButton.tsx` | Wallet connection | None |
+
+**Pages:**
+- `index.tsx`: Landing page with vault grid
+- `dashboard.tsx`: User dashboard (XP, positions)
+- `vault/[narrativeId].tsx`: Detailed vault view
+- `leaderboard.tsx`: Top traders/vaults
+- `how-it-works.tsx`: Educational content
+
+### 3.2. Backend (Node.js, TypeScript)
+
+**Stack:**
+- Runtime: Node.js 20+
+- Framework: Express.js
+- Language: TypeScript
+- Database: PostgreSQL with Prisma ORM
+- Cache: Redis
+- Queue: Bull (BullMQ)
+- WebSocket: Socket.io / ws
+
+**Service Modules:**
 
 ```mermaid
 graph TD
-    User(User - Web Browser)
-    Frontend(Next.js Frontend)
-    Backend(Node.js Backend - Express/Fastify)
-    Database(PostgreSQL)
-    Redis(Redis - Cache/Queue)
-    PearAPI(Pear Protocol Execution API)
-    SaltSDK(Salt SDK)
-    Hyperliquid(Hyperliquid Exchange)
-    Cron(Cron Jobs / Agent Loop)
-
-    User -- Connect Wallet (wagmi/viem) --> Frontend
-    Frontend -- REST API Calls --> Backend
-    Frontend -- WebSocket (Live P&L) --> Backend
-
-    Backend -- ORM (Prisma) --> Database
-    Backend -- Cache / Session / Bull Queue --> Redis
-    Backend -- Pear API Calls --> PearAPI
-    Backend -- Salt SDK Calls --> SaltSDK
-
-    SaltSDK -- On-chain transactions --> Hyperliquid
-    PearAPI -- Trade Execution --> Hyperliquid
-
-    Cron -- Periodically Triggers --> Backend (Agent Logic)
-    Backend (Agent Logic) -- Pear API Calls --> PearAPI
-    Backend (Agent Logic) -- Salt SDK Calls --> SaltSDK
-    Backend (Agent Logic) -- Update Data --> Database
-    Backend (Agent Logic) -- Publish Updates --> WebSocket
+    A[API Layer] --> B[Service Layer]
+    B --> C[Pear Service]
+    B --> D[Salt Service]
+    B --> E[Hyperliquid Service]
+    B --> F[XP Service]
+    B --> G[Vault Service]
+    B --> H[WebSocket Service]
+    
+    C --> I[External APIs]
+    D --> I
+    E --> I
+    
+    F --> J[Database]
+    G --> J
+    H --> K[Redis PubSub]
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style I fill:#ffebee
+    style J fill:#f3e5f5
+    style K fill:#e8f5e9
 ```
 
-## 2. Component Breakdown
+**Key Services:**
 
-### 2.1. Frontend (Next.js 14, TypeScript)
+- **`pear.service.ts`**: Pear Protocol API integration
+  - `executePair()`: Execute pair trades
+  - `executeBasket()`: Execute basket trades
+  - `getPosition()`: Fetch position status
+  - `closePosition()`: Close active positions
 
-The frontend is a single-page application built with Next.js, providing a rich user experience with a retro-gaming aesthetic.
+- **`salt.service.ts`**: Salt SDK integration
+  - `createVaultAccount()`: Create policy-controlled account
+  - `executeTradeViaSalt()`: Execute trades through Salt
+  - `checkRiskLimits()`: Verify policy compliance
 
-*   **Framework:** Next.js 14
-*   **Language:** TypeScript
-*   **Styling:** TailwindCSS for responsive and consistent design.
-*   **Web3 Integration:** `wagmi` for wallet connection and interaction, `viem` for low-level Ethereum interactions (e.g., contract calls).
-*   **State Management:**
-    *   **Server State:** React Query for managing asynchronous data fetching, caching, and synchronization with the backend API (e.g., vault data, user XP, trade history).
-    *   **Global Client State:** Zustand for lightweight global state management (e.g., user authentication status, theme preferences, temporary UI states).
-*   **Real-time Updates:** WebSocket connection to the backend for live P&L updates, XP accumulation, and achievement notifications.
-*   **Charts:** Lightweight-charts or Recharts for visualizing vault performance and individual position P&L.
+- **`hyperliquid.service.ts`**: Hyperliquid monitoring
+  - `getAssetPrices()`: Real-time price feeds
+  - `monitorPosition()`: Position health monitoring
+  - `emergencyLiquidation()`: Emergency actions
 
-#### Key Frontend Components:
+- **`xp.service.ts`**: Gamification logic
+  - `calculateXP()`: XP calculation from trades
+  - `awardXP()`: Award XP to users
+  - `checkLevelUp()`: Level progression
 
-*   **[`VaultCard.tsx`](frontend/src/components/VaultCard.tsx):** Displays narrative vault information, current P&L, TVL, and lock status.
-    *   **Props:** `narrative`, `currentPnL`, `tvl`, `isLocked`
-    *   **State:** None (receives all data via props or global state).
-*   **[`XPProgressBar.tsx`](frontend/src/components/XPProgressBar.tsx):** Visualizes user's XP progress and current level.
-    *   **Props:** `currentXP`, `currentLevel`, `nextLevelThreshold`
-    *   **State:** None.
-*   **[`LivePnLChart.tsx`](frontend/src/components/LivePnLChart.tsx):** Renders real-time P&L for a specific vault using WebSocket data.
-    *   **Props:** `vaultId`, `websocketEndpoint`
-    *   **State:** Chart data (updated via WebSocket).
-*   **[`DepositModal.tsx`](frontend/src/components/DepositModal.tsx):** Handles user deposits into a vault.
-    *   **Props:** `narrative`, `onDeposit` (callback), `userBalance`
-    *   **State:** Deposit amount input, loading state.
-*   **[`WalletConnectButton.tsx`](frontend/src/components/WalletConnectButton.tsx):** Standard button for connecting EVM wallets.
-*   **Pages:**
-    *   **[`index.tsx`](frontend/src/pages/index.tsx):** Landing page, displays `VaultCard` grid, trending vaults.
-    *   **[`dashboard.tsx`](frontend/src/pages/dashboard.tsx):** User's personal dashboard (XP, level, portfolio, active positions).
-    *   **[`vault/[narrativeId].tsx`](frontend/src/pages/vault/[narrativeId].tsx):** Detailed vault view, deposit/withdraw, `LivePnLChart`.
-    *   **[`leaderboard.tsx`](frontend/src/pages/leaderboard.tsx):** Displays top users and vaults.
-    *   **[`how-it-works.tsx`](frontend/src/pages/how-it-works.tsx):** Educational content.
+### 3.3. Smart Contracts (HyperEVM)
 
-### 2.2. Backend (Node.js, TypeScript)
+**Minimal Contract Layer:**
 
-The backend is responsible for API endpoints, database interactions, Pear and Salt SDK integrations, and the core agent logic.
+1. **Vault Share Token (ERC-20)**
+   - Represents proportional ownership in vaults
+   - Standard ERC-20 interface
+   - Mintable/Burnable by backend
 
-*   **Runtime:** Node.js
-*   **Framework:** Express.js or Fastify (for high performance).
-*   **Language:** TypeScript for strong typing and improved maintainability.
-*   **Database:** PostgreSQL for persistent storage of user data, vault states, trades, and XP events.
-    *   **ORM:** Prisma for type-safe database access and migrations.
-*   **Caching/Real-time Data:** Redis for caching hot data (e.g., live P&L, XP calculations) and managing WebSocket connections.
-*   **Queueing:** Bull for asynchronous processing of trade execution jobs, retries, and other background tasks to ensure responsiveness.
-*   **Monitoring:** Cron jobs to trigger the main agent loop every 30 seconds.
-*   **WebSockets:** For real-time updates to the frontend (e.g., P&L, XP, notifications).
+2. **Emergency Pause Contract**
+   - Admin-controlled circuit breaker
+   - Halt deposits/withdrawals
+   - Trigger mass liquidations
 
-#### Key Backend Modules/Services:
+---
 
-*   **[`api/`](backend/src/api/):** Defines REST API routes for user interactions (deposits, withdrawals), data retrieval (vaults, user data), and potentially webhook endpoints.
-*   **[`agent/`](backend/src/agent/):** Contains the core agent logic, including `agentMainLoop` for monitoring vaults, enforcing risk limits, and awarding XP.
-*   **[`services/`](backend/src/services/):** Encapsulates external API integrations (Pear, Salt, Hyperliquid), business logic (XP calculation, share token calculation), and other reusable functions.
-    *   **[`pear.service.ts`](backend/src/services/pear.service.ts):** Handles all interactions with the Pear Protocol API.
-    *   **[`salt.service.ts`](backend/src/services/salt.service.ts):** Manages Salt SDK interactions, including account creation and transaction execution.
-    *   **[`hyperliquid.service.ts`](backend/src/services/hyperliquid.service.ts):** Interfaces with Hyperliquid for price data, position monitoring, and emergency liquidations.
-    *   **[`xp.service.ts`](backend/src/services/xp.service.ts):** Implements XP calculation and leveling logic.
-*   **[`db/`](backend/src/db/):** Contains Prisma schema definition and database interaction utilities.
+## 4. Data Flow Diagrams
 
-### 2.3. Smart Contracts (HyperEVM)
-
-While the project emphasizes agent-based control, minimal smart contract interaction might be required.
-
-*   **Vault Share Token (ERC-20):** An ERC-20 compliant token deployed on HyperEVM to represent user's proportional shares in a vault. This allows for standardized tracking and transfer of vault ownership.
-*   **Emergency Pause Contract:** A simple contract with an admin-controlled function to halt all new deposits and potentially trigger mass position closures in case of systemic issues. This would be controlled by the `ADMIN_ADDRESS` specified in the Salt policy.
-
-### 2.4. Data Flow Diagram
+### 4.1. User Deposit Flow
 
 ```mermaid
-flowchart LR
-    A[User Wallet] --> B(Frontend);
-    B -- Connect/Auth --> C(Backend API);
-    C -- Deposit Request --> D{Deposit Handler};
-    D -- Create Salt Account (if new) --> E(Salt SDK);
-    E -- On-chain TX --> F(Hyperliquid);
-    D -- Transfer USDC --> E;
-    E -- On-chain TX --> F;
-    D -- Record Position/Update Vault --> G(PostgreSQL DB);
-    D -- Execute Initial Trade (if needed) --> H(Pear Service);
-    H -- Pear API Call --> I(Pear Protocol);
-    I -- Trade on Hyperliquid --> F;
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant S as Salt Service
+    participant P as Pear Service
+    participant HL as Hyperliquid
 
-    subgraph Backend Agent Loop (Every 30s)
-        J[Agent Start] --> K(Fetch Active Vaults from DB);
-        K --> L(Get Position Status via Pear Service);
-        L -- Pear API Call --> I;
-        L --> M{Calculate Drawdown};
-        M -- Check Risk Limits --> N{Salt Policy Check};
-        N -- Policy Violated? --> O(Close Position via Pear Service);
-        O -- Pear API Call --> I;
-        O --> P(Log Risk Event to DB);
-        O --> Q(Update Vault Status in DB);
-        M -- No Violation --> R(Update Vault P&L in DB);
-        R --> S(Calculate & Award XP);
-        S --> T(Update User XP in DB);
-        T --> U(Publish Real-time Updates via WebSocket);
-        U --> B;
+    U->>F: Click Deposit
+    F->>F: Show Deposit Modal
+    U->>F: Enter Amount & Confirm
+    F->>B: POST /api/vaults/:narrativeId/deposit
+    B->>B: Validate request
+    
+    alt Vault doesn't exist
+        B->>S: Create Salt Account
+        S->>HL: Deploy Policy Account
+        HL-->>S: Account Address
+        S-->>B: Salt Account Created
+        B->>B: Create Vault in DB
+    end
+    
+    B->>S: Transfer USDC to Salt Account
+    S->>HL: Transfer Transaction
+    HL-->>S: Tx Confirmed
+    
+    B->>B: Calculate Share Tokens
+    B->>B: Record User Position
+    
+    alt First deposit or rebalance needed
+        B->>P: Prepare Trade Data
+        B->>S: Execute Trade via Salt
+        S->>P: Call Pear Execution
+        P->>HL: Execute Pair/Basket Trade
+        HL-->>P: Trade Confirmed
+        P-->>B: Trade ID
+        B->>B: Update Vault with Position ID
+    end
+    
+    B->>B: Award First Depositor XP (if applicable)
+    B-->>F: Success Response
+    F-->>U: Show Confirmation
+    F->>F: Update UI with new position
+```
+
+### 4.2. Agent Loop Flow
+
+```mermaid
+flowchart TD
+    Start[Agent Loop Starts<br/>Every 30s] --> Fetch[Fetch Active Vaults from DB]
+    
+    Fetch --> Loop{For Each Vault}
+    
+    Loop --> GetPos[Get Position from Pear API]
+    GetPos --> CalcPnL[Calculate Current P&L]
+    CalcPnL --> CalcDraw[Calculate Drawdown %]
+    
+    CalcDraw --> CheckRisk{Drawdown > Max Allowed?}
+    
+    CheckRisk -->|Yes| ClosePos[Close Position via Pear API]
+    ClosePos --> LogRisk[Log Risk Event to DB]
+    LogRisk --> UpdateStatus[Update Vault Status to 'liquidated']
+    UpdateStatus --> NotifyUsers[Notify Users via WebSocket]
+    
+    CheckRisk -->|No| UpdatePnL[Update Vault P&L in DB]
+    UpdatePnL --> CalcXP[Calculate XP for Vault Participants]
+    CalcXP --> AwardXP[Award XP to Users]
+    AwardXP --> CheckLevel{Level Up?}
+    CheckLevel -->|Yes| NotifyLevel[Notify Level Up]
+    CheckLevel -->|No| PubUpdate[Publish Real-time Updates]
+    NotifyLevel --> PubUpdate
+    
+    PubUpdate --> Next{More Vaults?}
+    NotifyUsers --> Next
+    
+    Next -->|Yes| Loop
+    Next -->|No| End[Agent Loop Complete]
+    End --> Wait[Wait 30s]
+    Wait --> Start
+    
+    style Start fill:#e1f5ff
+    style CheckRisk fill:#fff4e6
+    style ClosePos fill:#ffe1e1
+    style CheckLevel fill:#e8f5e9
+    style End fill:#f3e5f5
+```
+
+### 4.3. User Withdrawal Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend API
+    participant DB as Database
+    participant S as Salt Service
+    participant P as Pear Service
+    participant HL as Hyperliquid
+
+    U->>F: Request Withdrawal
+    F->>B: POST /api/vaults/:vaultId/withdraw
+    B->>DB: Get User Position & Vault Data
+    DB-->>B: Position & Vault Info
+    
+    B->>B: Calculate User's Share of P&L
+    B->>P: Get Current Position Value
+    P-->>B: Position Data
+    
+    B->>B: Calculate Withdrawal Amount
+    
+    alt Partial Withdrawal
+        B->>B: Reduce Share Tokens
+        B->>DB: Update User Position
+    else Full Withdrawal
+        B->>DB: Mark Position as Withdrawn
+    end
+    
+    B->>S: Transfer USDC from Salt Account
+    S->>HL: Execute Transfer
+    HL-->>S: Tx Confirmed
+    S-->>B: Transfer Complete
+    
+    B->>DB: Record Withdrawal Transaction
+    B-->>F: Success Response
+    F-->>U: Show Confirmation & Updated Balance
+```
+
+---
+
+## 5. Sequence Diagrams
+
+### 5.1. Complete Trading Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User
+    participant Frontend
+    participant Backend
+    participant Salt
+    participant Pear
+    participant Hyperliquid
+    participant Agent
+
+    Note over User,Hyperliquid: DEPOSIT PHASE
+    User->>Frontend: Connect Wallet
+    Frontend->>Backend: Authenticate
+    User->>Frontend: Select Narrative & Deposit Amount
+    Frontend->>Backend: POST /api/deposit
+    Backend->>Salt: Create/Get Vault Account
+    Backend->>Salt: Transfer Funds
+    Salt->>Hyperliquid: On-chain Transfer
+    Backend->>Pear: Execute Initial Trade
+    Pear->>Hyperliquid: Open Positions
+    Hyperliquid-->>Backend: Trade Confirmed
+    Backend-->>Frontend: Deposit Success
+    
+    Note over User,Hyperliquid: MONITORING PHASE
+    loop Every 30s
+        Agent->>Backend: agentMainLoop()
+        Agent->>Pear: getPosition()
+        Pear-->>Agent: Current Position Data
+        Agent->>Agent: Calculate P&L & Drawdown
+        alt Risk Limit Breached
+            Agent->>Pear: closePosition()
+            Pear->>Hyperliquid: Close All Positions
+            Agent->>Backend: Update Vault Status
+        else Normal Operation
+            Agent->>Backend: Update P&L
+            Agent->>Backend: Calculate & Award XP
+        end
+        Agent->>Frontend: WebSocket Update
+        Frontend-->>User: Real-time P&L Display
+    end
+    
+    Note over User,Hyperliquid: WITHDRAWAL PHASE
+    User->>Frontend: Request Withdrawal
+    Frontend->>Backend: POST /api/withdraw
+    Backend->>Backend: Calculate Share Value
+    Backend->>Salt: Transfer to User
+    Salt->>Hyperliquid: On-chain Transfer
+    Backend-->>Frontend: Withdrawal Success
+    Frontend-->>User: Funds Received
+```
+
+### 5.2. Risk Management Flow
+
+```mermaid
+sequenceDiagram
+    participant A as Agent Loop
+    participant P as Pear API
+    participant V as Vault DB
+    participant S as Salt SDK
+    participant HL as Hyperliquid
+    participant U as Users
+
+    A->>V: Get All Active Vaults
+    V-->>A: Vault List
+    
+    loop For Each Vault
+        A->>P: getPosition(vaultId)
+        P-->>A: {currentValue, unrealizedPnL}
+        
+        A->>A: drawdown = (deposits - currentValue) / deposits
+        
+        alt drawdown > maxDrawdown
+            A->>A: Log "Risk Limit Breached"
+            A->>P: closePosition(vaultId)
+            P->>HL: Close All Positions
+            HL-->>P: Positions Closed
+            P-->>A: Closure Confirmed
+            
+            A->>V: Update Vault Status = 'liquidated'
+            A->>V: Log Risk Event
+            A->>U: WebSocket: Liquidation Alert
+            
+        else drawdown <= maxDrawdown
+            A->>V: Update current_pnl
+            A->>A: Calculate XP Earned
+            A->>V: Award XP to Participants
+            A->>U: WebSocket: P&L Update
+        end
     end
 ```
 
-## 3. Database Schema
+### 5.3. XP Award System Flow
 
-The database schema (PostgreSQL with Prisma ORM) is critical for managing user data, vault states, trade history, and gamification elements.
-
-```sql
--- Users table
-CREATE TABLE users (
-  id UUID PRIMARY KEY,
-  wallet_address VARCHAR(42) UNIQUE NOT NULL,
-  total_xp INTEGER DEFAULT 0,
-  current_level INTEGER DEFAULT 1,
-  referral_code VARCHAR(8) UNIQUE,
-  referred_by UUID REFERENCES users(id),
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Vaults table
-CREATE TABLE vaults (
-  id UUID PRIMARY KEY,
-  narrative_id VARCHAR(50) NOT NULL,
-  salt_account_address VARCHAR(42) UNIQUE,
-  total_deposits DECIMAL(18, 6) DEFAULT 0,
-  current_pnl DECIMAL(18, 6) DEFAULT 0,
-  active_position_id VARCHAR(100),
-  status VARCHAR(20) DEFAULT 'active',
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- User positions in vaults
-CREATE TABLE vault_positions (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  vault_id UUID REFERENCES vaults(id),
-  deposit_amount DECIMAL(18, 6) NOT NULL,
-  share_tokens DECIMAL(18, 6) NOT NULL,
-  entry_pnl DECIMAL(18, 6) DEFAULT 0,
-  deposited_at TIMESTAMP DEFAULT NOW(),
-  withdrawn_at TIMESTAMP
-);
-
--- Trading positions
-CREATE TABLE trades (
-  id UUID PRIMARY KEY,
-  vault_id UUID REFERENCES vaults(id),
-  pear_trade_id VARCHAR(100) UNIQUE,
-  narrative_id VARCHAR(50),
-  long_tokens TEXT[],
-  short_tokens TEXT[],
-  leverage DECIMAL(3, 2),
-  entry_value DECIMAL(18, 6),
-  current_value DECIMAL(18, 6),
-  realized_pnl DECIMAL(18, 6),
-  status VARCHAR(20),
-  opened_at TIMESTAMP DEFAULT NOW(),
-  closed_at TIMESTAMP
-);
-
--- XP ledger
-CREATE TABLE xp_events (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  vault_id UUID REFERENCES vaults(id),
-  xp_earned INTEGER NOT NULL,
-  event_type VARCHAR(50),
-  description TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Risk events log
-CREATE TABLE risk_events (
-  id UUID PRIMARY KEY,
-  vault_id UUID REFERENCES vaults(id),
-  event_type VARCHAR(50),
-  current_drawdown DECIMAL(5, 2),
-  max_allowed_drawdown DECIMAL(5, 2),
-  action_taken VARCHAR(100),
-  created_at TIMESTAMP DEFAULT NOW()
-);
+```mermaid
+flowchart LR
+    A[Trade Profitable] --> B[Calculate PnL %]
+    B --> C[XP = PnL% * 100]
+    C --> D[Check Bonuses]
+    
+    D --> E{Daily Holding?}
+    E -->|Yes| F[+10 XP/day]
+    E -->|No| G{First Depositor?}
+    
+    F --> G
+    G -->|Yes| H[+50 XP]
+    G -->|No| I[Award Total XP]
+    H --> I
+    
+    I --> J[Update User total_xp]
+    J --> K{Level Up?}
+    K -->|Yes| L[Increment Level]
+    K -->|No| M[Publish XP Update]
+    L --> N[Unlock New Narratives]
+    N --> O[Notify User]
+    O --> M
+    
+    style A fill:#e8f5e9
+    style K fill:#fff3e0
+    style L fill:#e1f5ff
 ```
 
-## 4. API Integration Specifications
+---
 
-### 4.1. Pear Protocol Integration
+## 6. Database Schema
 
-*   **Base URL:** `https://api.pear.garden` (to be verified with Pear Protocol documentation).
-*   **Authentication:** `ClientId: HLHackathon1` through `HLHackathon10`. The backend will manage client ID rotation or assignment to vaults.
-*   **Error Handling:**
-    *   Retry failed trades 3 times with exponential backoff.
-    *   If Pear API is down, queue trades locally (using Bull), and notify users of delay via WebSocket.
-    *   If slippage exceeds the configured tolerance, abort the trade and refund deposits minus gas fees.
+### Entity Relationship Diagram
 
-#### Key Endpoints:
+```mermaid
+erDiagram
+    USERS ||--o{ VAULT_POSITIONS : has
+    USERS ||--o{ XP_EVENTS : earns
+    VAULTS ||--o{ VAULT_POSITIONS : contains
+    VAULTS ||--o{ TRADES : executes
+    VAULTS ||--o{ RISK_EVENTS : triggers
+    VAULTS ||--o{ XP_EVENTS : generates
+    TRADES ||--o{ XP_EVENTS : results_in
 
-*   **`POST /api/v1/execute-pair`:**
-    *   **Request Body:**
-        ```typescript
-        interface ExecutePairRequest {
-          clientId: string;
-          longAsset: string;
-          shortAsset: string;
-          longAmount: number; // or total value for a ratio-based approach
-          leverage: number;
-          slippageTolerance: number;
-        }
-        ```
-*   **`POST /api/v1/execute-basket`:**
-    *   **Request Body:**
-        ```typescript
-        interface ExecuteBasketRequest {
-          clientId: string;
-          longBasket: Array<{ asset: string; weight: number }>;
-          shortBasket: Array<{ asset: string; weight: number }>;
-          totalValue: number;
-          leverage: number;
-        }
-        ```
-*   **`GET /api/v1/position/{tradeId}`:**
-    *   **Response Body:**
-        ```typescript
-        interface PositionStatusResponse {
-          tradeId: string;
-          status: 'open' | 'closed' | 'liquidated' | 'pending';
-          currentValue: number;
-          unrealizedPnL: number;
-          longPositions: Array<{ asset: string; quantity: number; entryPrice: number }>;
-          shortPositions: Array<{ asset: string; quantity: number; entryPrice: number }>;
-          // ... other relevant position details
-        }
-        ```
-*   **`POST /api/v1/close/{tradeId}`:**
-    *   **Request Body:** None (tradeId in path)
-    *   **Response Body:** Confirmation of closure or error.
+    USERS {
+        uuid id PK
+        varchar wallet_address UK
+        integer total_xp
+        integer current_level
+        varchar referral_code UK
+        uuid referred_by FK
+        timestamp created_at
+    }
 
-### 4.2. Salt SDK Integration
+    VAULTS {
+        uuid id PK
+        varchar narrative_id
+        varchar salt_account_address UK
+        decimal total_deposits
+        decimal current_pnl
+        varchar active_position_id
+        varchar status
+        timestamp created_at
+    }
 
-*   **Documentation:** "A-Z Building an Agent on Salt" guide and Salt SDK docs.
-*   **ABI Encoding:** The backend will use a library like `ethers.js` or `viem` to ABI-encode Pear API call data for `externalCall` actions within the Salt SDK.
+    VAULT_POSITIONS {
+        uuid id PK
+        uuid user_id FK
+        uuid vault_id FK
+        decimal deposit_amount
+        decimal share_tokens
+        decimal entry_pnl
+        timestamp deposited_at
+        timestamp withdrawn_at
+    }
 
-#### Core Functions:
+    TRADES {
+        uuid id PK
+        uuid vault_id FK
+        varchar pear_trade_id UK
+        varchar narrative_id
+        text long_tokens
+        text short_tokens
+        decimal leverage
+        decimal entry_value
+        decimal current_value
+        decimal realized_pnl
+        varchar status
+        timestamp opened_at
+        timestamp closed_at
+    }
 
-*   **`createVaultAccount(narrativeConfig):`**
-    *   Creates a new policy-controlled Salt account for a given narrative.
-    *   **Policy Rules:** `maxLeverage`, `maxDrawdownPercent`, `allowedProtocols` (`pear.garden`, `hyperliquid`), `emergencyAdmin`.
-    *   Returns the new Salt account address.
-*   **`executeTradeViaSalt(vaultAddress, tradeData):`**
-    *   Executes a transaction through the Salt policy account.
-    *   `tradeData` will be the ABI-encoded Pear API call.
-    *   Salt will perform policy checks before executing the external call to the Pear Execution Contract.
-*   **`checkRiskLimits(vaultAddress):`**
-    *   Retrieves the account state from Salt.
-    *   Calculates current drawdown.
-    *   Compares against `maxDrawdownPercent` from the Salt policy.
-    *   Returns compliance status and recommended action (e.g., `close_positions`) if non-compliant.
+    XP_EVENTS {
+        uuid id PK
+        uuid user_id FK
+        uuid vault_id FK
+        integer xp_earned
+        varchar event_type
+        text description
+        timestamp created_at
+    }
 
-### 4.3. Hyperliquid API Integration
+    RISK_EVENTS {
+        uuid id PK
+        uuid vault_id FK
+        varchar event_type
+        decimal current_drawdown
+        decimal max_allowed_drawdown
+        varchar action_taken
+        timestamp created_at
+    }
+```
 
-*   **Network:** HyperEVM (Chain ID: 999, RPC: `https://rpc.hyperliquid.xyz/evm`)
-*   **API Wallet Setup:** A dedicated backend wallet (private key secured in environment variables/HSM) will be used for signing transactions related to the Salt policy account and covering HyperEVM gas fees. The Salt policy account will hold the actual trading capital (USDC).
+### Key Tables
 
-#### Key Operations:
+**users**
+- Stores user accounts with wallet addresses
+- Tracks total XP and current level
+- Supports referral system
 
-*   **Get Asset Prices:** For accurate P&L calculations and real-time display.
-*   **Monitor Position Health:** Real-time monitoring via WebSocket for critical alerts.
-*   **Emergency Liquidation:** Direct interaction with Hyperliquid (if necessary and within Salt policy) in extreme risk scenarios, though Pear API `closePosition` is the primary method.
+**vaults**
+- One vault per narrative (can be multiple if previous is liquidated)
+- Links to Salt policy account
+- Tracks total deposits and current P&L
 
-## 5. Backend Agent Logic
+**vault_positions**
+- User's position in a specific vault
+- Share token calculation for proportional ownership
+- Tracks entry P&L for accurate gain/loss calculation
 
-The heart of the Narrative Vaults platform, ensuring automated trading, risk management, and gamification.
+**trades**
+- Records all executed trades via Pear Protocol
+- Links to vault and stores Pear trade ID
+- Tracks current value for P&L calculations
 
-### 5.1. Main Agent Loop
+**xp_events**
+- Ledger of all XP awarded
+- Links to user and vault
+- Categorizes by event type (trade_profit, daily_bonus, etc.)
 
-Runs every 30 seconds (triggered by a cron job).
+**risk_events**
+- Audit trail of all risk management actions
+- Records drawdown levels and automated responses
+
+---
+
+## 7. API Integration Specifications
+
+### 7.1. Pear Protocol Integration
+
+**Base URL**: `https://api.pear.garden`  
+**Authentication**: Client ID system (`HLHackathon1` through `HLHackathon10`)
+
+#### Key Endpoints
+
+**Execute Pair Trade**
+```typescript
+POST /api/v1/execute-pair
+
+Request:
+{
+  clientId: string
+  longAsset: string
+  shortAsset: string
+  longAmount: number
+  leverage: number
+  slippageTolerance: number
+}
+
+Response:
+{
+  tradeId: string
+  status: 'pending' | 'executed'
+  estimatedValue: number
+}
+```
+
+**Execute Basket Trade**
+```typescript
+POST /api/v1/execute-basket
+
+Request:
+{
+  clientId: string
+  longBasket: Array<{asset: string, weight: number}>
+  shortBasket: Array<{asset: string, weight: number}>
+  totalValue: number
+  leverage: number
+}
+```
+
+**Get Position Status**
+```typescript
+GET /api/v1/position/{tradeId}
+
+Response:
+{
+  tradeId: string
+  status: 'open' | 'closed' | 'liquidated'
+  currentValue: number
+  unrealizedPnL: number
+  longPositions: Array<{asset: string, quantity: number, entryPrice: number}>
+  shortPositions: Array<{asset: string, quantity: number, entryPrice: number}>
+}
+```
+
+**Close Position**
+```typescript
+POST /api/v1/close/{tradeId}
+
+Response:
+{
+  tradeId: string
+  closedValue: number
+  realizedPnL: number
+}
+```
+
+#### Error Handling
+
+- Retry failed trades 3x with exponential backoff
+- Queue trades locally if Pear API is down (using Bull)
+- Abort and refund if slippage exceeds tolerance
+
+### 7.2. Salt SDK Integration
+
+**Core Functions:**
+
+```typescript
+// Create policy-controlled vault account
+createVaultAccount(narrativeConfig: NarrativeConfig): Promise<string>
+
+// Execute trade through Salt policy account
+executeTradeViaSalt(vaultAddress: string, tradeData: string): Promise<string>
+
+// Check if account complies with risk policies
+checkRiskLimits(vaultAddress: string): Promise<{
+  compliant: boolean
+  currentDrawdown: number
+  maxAllowed: number
+}>
+
+// Transfer funds to/from Salt account
+transferToSaltAccount(address: string, amount: number): Promise<string>
+transferFromSaltAccount(address: string, recipient: string, amount: number): Promise<string>
+```
+
+**Policy Configuration:**
+```typescript
+interface SaltPolicy {
+  maxLeverage: number
+  maxDrawdownPercent: number
+  allowedProtocols: string[]
+  emergencyAdmin: string
+}
+```
+
+### 7.3. Hyperliquid API
+
+**Network**: HyperEVM  
+**Chain ID**: 998  
+**RPC**: `https://rpc.hyperliquid.xyz/evm`
+
+**Key Operations:**
+- Get asset prices for P&L calculations
+- Monitor position health via WebSocket
+- Emergency liquidation (if necessary)
+
+---
+
+## 8. Backend Agent Logic
+
+### Agent Main Loop (Every 30s)
 
 ```typescript
 async function agentMainLoop() {
-  const activeVaults = await db.vaults.findMany({ status: 'active' });
-
+  const activeVaults = await db.vaults.findMany({ where: { status: 'active' } })
+  
   for (const vault of activeVaults) {
-    // 1. Check current position P&L via Pear API
-    const position = await pearAPI.getPosition(vault.active_position_id);
-
-    // 2. Calculate drawdown from vault inception
-    const drawdown = calculateDrawdown(vault.total_deposits, position.currentValue);
-
-    // 3. Check if risk limits breached
-    const narrative = NARRATIVES[vault.narrative_id];
+    // 1. Get current position from Pear
+    const position = await pearAPI.getPosition(vault.active_position_id)
+    
+    // 2. Calculate drawdown
+    const drawdown = calculateDrawdown(vault.total_deposits, position.currentValue)
+    
+    // 3. Check risk limits
+    const narrative = NARRATIVES[vault.narrative_id]
     if (drawdown > parseFloat(narrative.max_drawdown)) {
-      // ⚠️ Policy Breach: Agent closes position
-      await pearAPI.closePosition(vault.active_position_id);
-
-      // 4. Log risk event
+      // Policy breach - auto-liquidate
+      await pearAPI.closePosition(vault.active_position_id)
       await db.risk_events.create({
         vault_id: vault.id,
         event_type: 'auto_liquidation',
         current_drawdown: drawdown,
         max_allowed_drawdown: narrative.max_drawdown,
         action_taken: 'closed_all_positions'
-      });
-
-      // 5. Update vault status
+      })
       await db.vaults.update({
         where: { id: vault.id },
         data: { status: 'liquidated' }
-      });
+      })
     }
-
-    // 6. Update vault P&L in database (for real-time display)
+    
+    // 4. Update vault P&L
     await db.vaults.update({
       where: { id: vault.id },
       data: { current_pnl: position.unrealizedPnL }
-    });
-
-    // 7. Calculate and award XP to vault participants
-    await calculateAndAwardXP(vault, position);
+    })
+    
+    // 5. Calculate and award XP
+    await calculateAndAwardXP(vault, position)
+    
+    // 6. Publish real-time updates
+    wsService.publish(`vault:${vault.id}`, {
+      currentPnL: position.unrealizedPnL,
+      drawdown
+    })
   }
 }
 
-// Scheduled execution: setInterval(agentMainLoop, 30000);
+// Run every 30 seconds
+setInterval(agentMainLoop, 30000)
 ```
 
-### 5.2. Deposit Handler
-
-Triggered when a user deposits USDC into a vault.
+### Deposit Handler
 
 ```typescript
-async function handleUserDeposit(userId, narrativeId, depositAmount) {
+async function handleUserDeposit(userId: string, narrativeId: string, depositAmount: number) {
   let vault = await db.vaults.findFirst({
     where: { narrative_id: narrativeId, status: 'active' }
-  });
-
-  // 1. If no vault, create new one with Salt
+  })
+  
+  // Create vault if doesn't exist
   if (!vault) {
-    const narrative = NARRATIVES[narrativeId];
-    const saltAccountAddress = await saltService.createVaultAccount(narrative);
-
+    const narrative = NARRATIVES[narrativeId]
+    const saltAccountAddress = await saltService.createVaultAccount(narrative)
     vault = await db.vaults.create({
       data: {
         narrative_id: narrativeId,
         salt_account_address: saltAccountAddress,
-        total_deposits: 0 // Will be updated after transfer
+        total_deposits: 0
       }
-    });
+    })
   }
-
-  // 2. Transfer user's USDC to vault Salt account (simulated/actual)
-  await saltService.transferToSaltAccount(vault.salt_account_address, depositAmount);
-
-  // 3. Calculate share tokens (proportional to current vault value)
-  const shareTokens = calculateShareTokens(vault, depositAmount);
-
-  // 4. Record user's position
+  
+  // Transfer USDC to Salt account
+  await saltService.transferToSaltAccount(vault.salt_account_address, depositAmount)
+  
+  // Calculate share tokens
+  const shareTokens = calculateShareTokens(vault, depositAmount)
+  
+  // Record position
   await db.vault_positions.create({
     data: {
       user_id: userId,
@@ -399,160 +844,229 @@ async function handleUserDeposit(userId, narrativeId, depositAmount) {
       deposit_amount: depositAmount,
       share_tokens: shareTokens
     }
-  });
-
-  // 5. Update vault total deposits
+  })
+  
+  // Update vault
   await db.vaults.update({
     where: { id: vault.id },
     data: { total_deposits: vault.total_deposits + depositAmount }
-  });
-
-  // 6. Execute trade via Pear if vault just created or needs rebalance
+  })
+  
+  // Execute trade if needed
   if (!vault.active_position_id || shouldRebalance(vault)) {
-    const narrative = NARRATIVES[narrativeId];
-    // This trade will be executed via Salt
-    const pearTradeData = pearService.prepareTradeData(vault, narrative);
-    const txHash = await saltService.executeTradeViaSalt(vault.salt_account_address, pearTradeData);
-
-    // Assuming we get a trade ID back from Pear after Salt execution confirms
-    const tradeId = await pearService.getTradeIdFromTxHash(txHash); // Placeholder for actual Pear integration
-    
+    const tradeData = await pearService.prepareTradeData(vault, NARRATIVES[narrativeId])
+    const txHash = await saltService.executeTradeViaSalt(vault.salt_account_address, tradeData)
+    const tradeId = await pearService.getTradeIdFromTxHash(txHash)
     await db.vaults.update({
       where: { id: vault.id },
       data: { active_position_id: tradeId }
-    });
+    })
   }
-
-  // 7. Award first depositor bonus XP
-  const isFirstDeposit = await checkIfFirstDeposit(vault.id);
+  
+  // Award first depositor bonus
+  const isFirstDeposit = await checkIfFirstDeposit(vault.id)
   if (isFirstDeposit) {
-    await xpService.awardXP(userId, vault.id, 50, 'first_depositor_bonus');
+    await xpService.awardXP(userId, vault.id, 50, 'first_depositor_bonus')
   }
-
-  return { vaultId: vault.id, shareTokens };
+  
+  return { vaultId: vault.id, shareTokens }
 }
 ```
 
-## 6. Security & Risk Management
+---
 
-Critical considerations for a robust and secure platform.
+## 9. Security & Risk Management
 
-*   **Private Key Security:** Hyperliquid API wallet private keys will be stored securely in environment variables (for hackathon) or a dedicated secret management service (e.g., AWS Secrets Manager, HashiCorp Vault) for production. Access will be restricted.
-*   **Salt Policy Audit:** Thoroughly review and test Salt policy definitions (max leverage, drawdown limits, allowed protocols) before deployment to ensure they function as intended and prevent unauthorized actions.
-*   **Rate Limiting:** Implement backend rate limiting (e.g., `express-rate-limit`) to prevent spam deposits (e.g., max 5 deposits per user per hour).
-*   **Emergency Pause:** The emergency pause smart contract will allow the designated `ADMIN_ADDRESS` to halt new deposits and potentially trigger mass liquidations if a severe vulnerability or market anomaly is detected.
-*   **Slippage Protection:** Configure slippage tolerance in Pear API calls. If the actual trade slippage exceeds the defined threshold (e.g., 2%), the trade will be aborted, and user deposits (minus gas fees) will be refunded.
-*   **Edge Case Handling:**
-    *   **Partial Fills:** If Pear returns a partial fill for a basket order, the agent will scale down the entire position proportionally to maintain the narrative's intended ratio.
-    *   **API Downtime:** Implement circuit breakers and retry mechanisms. If Pear or Hyperliquid APIs are down, trades will be queued in BullMQ, retried, and users will be notified via WebSocket.
-    *   **Vault Insolvency:** If accumulated losses (due to leverage) exceed total deposits, the vault will be marked as insolvent, withdrawals frozen, and an administrative review triggered.
-    *   **User Withdraws Mid-Trade:** When a user withdraws, their share of the current P&L will be calculated. Share tokens will be burned, and proportional USDC will be transferred back. This requires a robust `calculatePnLShare` function.
+### Security Measures
 
-## 7. Development and Deployment Strategy
+```mermaid
+graph TD
+    A[Security Layers] --> B[Private Key Security]
+    A --> C[Rate Limiting]
+    A --> D[Input Validation]
+    A --> E[Emergency Controls]
+    
+    B --> B1[Environment Variables]
+    B --> B2[Secrets Manager]
+    B --> B3[HSM for Production]
+    
+    C --> C1[API Rate Limits]
+    C --> C2[Deposit Limits]
+    C --> C3[Withdrawal Throttling]
+    
+    D --> D1[Schema Validation]
+    D --> D2[Signature Verification]
+    D --> D3[Sanitization]
+    
+    E --> E1[Emergency Pause]
+    E --> E2[Admin Controls]
+    E --> E3[Circuit Breakers]
+    
+    style A fill:#ffe1e1
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#e1f5ff
+    style E fill:#f3e5f5
+```
 
-### 7.1. Implementation Plan (High-Level Task Breakdown)
+### Risk Management Strategies
 
-This plan prioritizes core functionality and hackathon readiness.
+1. **Salt Policy Enforcement**
+   - Max leverage limits per narrative
+   - Drawdown protection (10-20% max)
+   - Allowed protocol whitelist
 
-1.  **Backend Setup & Core Services:**
-    *   Initialize Node.js project, TypeScript, Express/Fastify.
-    *   Set up PostgreSQL with Prisma ORM and define schema.
-    *   Implement basic user authentication (wallet connect).
-    *   Develop `pear.service.ts` for Pear API calls.
-    *   Develop `salt.service.ts` for Salt SDK integration (account creation, `executeAction`).
-    *   Develop `hyperliquid.service.ts` for price feeds and basic monitoring.
-    *   Implement `xp.service.ts` for XP calculation and leveling.
-    *   Implement `depositHandler` and associated functions (`calculateShareTokens`, `checkIfFirstDeposit`).
+2. **Slippage Protection**
+   - Configure max slippage (e.g., 2%)
+   - Abort trades exceeding tolerance
+   - Refund deposits minus gas
 
-2.  **Frontend Setup & Core UI:**
-    *   Initialize Next.js project, TypeScript, TailwindCSS.
-    *   Configure `wagmi` and `viem` for HyperEVM wallet connections.
-    *   Develop `WalletConnectButton.tsx`.
-    *   Build `VaultCard.tsx` and the landing page (`index.tsx`).
-    *   Create basic `XPProgressBar.tsx`.
-    *   Implement `DepositModal.tsx`.
-    *   Set up React Query for data fetching.
+3. **API Failure Handling**
+   - Circuit breakers for external APIs
+   - Exponential backoff retries (3x max)
+   - Local queue for offline periods
 
-3.  **Agent Logic & Real-time:**
-    *   Implement `agentMainLoop` and integrate with Pear/Salt services.
-    *   Set up cron job for `agentMainLoop`.
-    *   Integrate Redis for caching and Bull for queueing trade executions.
-    *   Establish WebSocket server for live P&L, XP updates, and notifications.
-    *   Develop `LivePnLChart.tsx` to consume WebSocket data.
+4. **Edge Cases**
+   - **Partial Fills**: Scale position proportionally
+   - **API Downtime**: Queue with Bull, notify users
+   - **Vault Insolvency**: Freeze withdrawals, admin review
+   - **Mid-Trade Withdrawal**: Calculate proportional P&L share
 
-4.  **Gamification & Polish:**
-    *   Refine XP calculation logic, add time bonus, referral bonus.
-    *   Implement level-up notifications.
-    *   Build `dashboard.tsx` and `leaderboard.tsx`.
-    *   Add pixel art badges and visual flair.
+### Audit Trail
 
-5.  **Security, Risk, & Edge Cases:**
-    *   Implement rate limiting on backend API.
-    *   Review Salt policies and conduct basic testing.
-    *   Add comprehensive error handling and retry logic for API integrations.
-    *   Address edge cases (partial fills, API downtime, insolvency, withdrawals).
-
-6.  **Documentation & Demo Prep:**
-    *   Flesh out `API_DOCS.md` and `SETUP_GUIDE.md`.
-    *   Create `demo-script.md` and prepare pitch deck.
-
-### 7.2. Testing Strategy
-
-*   **Unit Tests (Jest/Vitest):**
-    *   **Backend:** Test individual functions in services (e.g., `xp.service.ts` for XP calculations, `calculateDrawdown` utility, `calculateShareTokens`). Mock external API calls.
-    *   **Frontend:** Test pure components (e.g., `VaultCard.tsx` rendering with various props), utility functions.
-*   **Integration Tests (Supertest for API, Playwright/Cypress for E2E):**
-    *   **Backend:** Test API routes end-to-end, including database interactions and mocked external API responses (Pear, Salt).
-    *   **Agent Logic:** Simulate the `agentMainLoop` with mocked P&L data and verify risk limit enforcement, XP awards, and database updates.
-    *   **Frontend-Backend:** Test user flows (connect wallet, deposit, view P&L) across the entire stack.
-*   **Salt Policy Testing:**
-    *   Deploy Salt policies to a testnet.
-    *   Attempt trades that *should* violate policies (e.g., exceeding max leverage/drawdown) and verify they are blocked.
-    *   Attempt valid trades and verify successful execution.
-*   **Pear API Integration Testing:**
-    *   Utilize Pear's testnet/staging environment.
-    *   Execute pair and basket trades, verify position status and P&L updates.
-    *   Test error handling (slippage, API downtime).
-
-### 7.3. Deployment Guide
-
-#### Frontend (Vercel)
-
-1.  **Repository Setup:** Ensure the `frontend/` directory is a separate Next.js project within the main `narrative-vaults` monorepo.
-2.  **Vercel Project Creation:**
-    *   Link Vercel to your GitHub repository.
-    *   Configure the root directory for the project as `frontend/`.
-    *   Vercel will automatically detect Next.js.
-3.  **Environment Variables:**
-    *   Set `NEXT_PUBLIC_BACKEND_API_URL` to your deployed backend URL.
-    *   Set `NEXT_PUBLIC_WEB3_PROJECT_ID` (for WalletConnect/Wagmi).
-4.  **Build & Deploy:** Vercel will automatically build and deploy the application on every push to the main branch.
-
-#### Backend (Railway / Render)
-
-1.  **Repository Setup:** Ensure the `backend/` directory is a separate Node.js project.
-2.  **Database (PostgreSQL):**
-    *   Provision a PostgreSQL database instance (e.g., via Railway/Render's managed services or a separate provider like Supabase/Neon).
-    *   Obtain the database connection string.
-3.  **Redis:**
-    *   Provision a Redis instance for caching and BullMQ (e.g., via Railway/Render's managed services or a separate provider).
-    *   Obtain the Redis connection string.
-4.  **Deployment Service (Railway/Render):**
-    *   Connect Railway/Render to your GitHub repository.
-    *   Configure the service to deploy the `backend/` directory.
-    *   **Build Command:** `npm install && npm run build` (assuming `tsconfig.json` and `build` script are configured).
-    *   **Start Command:** `npm start` (or `node dist/src/main.js` if building to `dist`).
-5.  **Environment Variables:**
-    *   `DATABASE_URL` (PostgreSQL connection string).
-    *   `REDIS_URL` (Redis connection string).
-    *   `PEAR_API_BASE_URL`, `PEAR_CLIENT_ID_START`, `PEAR_CLIENT_ID_END`.
-    *   `SALT_SDK_RPC_URL`, `BACKEND_WALLET_PRIVATE_KEY` (Hyperliquid API wallet).
-    *   `HYPEREVM_RPC_URL`.
-    *   `ADMIN_ADDRESS` (for emergency pause).
-    *   `WEBSOCKET_PORT` (if separate from HTTP).
-6.  **Cron Job (for Agent Loop):**
-    *   Configure a cron job within Railway/Render (or a separate service like `cron-job.org`) to hit a protected backend endpoint (`/api/agent/run-loop`) every 30 seconds, triggering `agentMainLoop`. Ensure this endpoint is secured (e.g., with an API key).
+All critical events logged:
+- Risk events (liquidations, policy breaches)
+- XP awards and level-ups
+- Deposits and withdrawals
+- Trade executions
 
 ---
 
-This architecture document provides a comprehensive overview of the Narrative Vaults project, detailing its components, data flows, integrations, and deployment strategy.
+## 10. Deployment Strategy
+
+### Infrastructure Diagram
+
+```mermaid
+graph TB
+    subgraph Production
+        FE[Frontend<br/>Vercel]
+        BE[Backend<br/>Railway/Render]
+        DB[(PostgreSQL<br/>Supabase)]
+        RD[(Redis<br/>Upstash)]
+    end
+    
+    subgraph External
+        PearAPI[Pear Protocol]
+        SaltSDK[Salt SDK]
+        HyperL[Hyperliquid]
+    end
+    
+    subgraph Monitoring
+        LOG[Logging<br/>Datadog]
+        APM[APM<br/>New Relic]
+        ERR[Error Tracking<br/>Sentry]
+    end
+    
+    FE --> BE
+    BE --> DB
+    BE --> RD
+    BE --> PearAPI
+    BE --> SaltSDK
+    BE --> HyperL
+    
+    BE --> LOG
+    BE --> APM
+    BE --> ERR
+    
+    style FE fill:#e3f2fd
+    style BE fill:#fff3e0
+    style DB fill:#f3e5f5
+    style RD fill:#e8f5e9
+```
+
+### Deployment Checklist
+
+**Frontend (Vercel)**
+- [x] Connect GitHub repository
+- [x] Set root directory to `frontend/`
+- [x] Configure environment variables
+- [x] Enable automatic deployments
+
+**Backend (Railway/Render)**
+- [x] Connect GitHub repository
+- [x] Set root directory to `backend/`
+- [x] Provision PostgreSQL database
+- [x] Provision Redis instance
+- [x] Configure environment variables
+- [x] Set build command: `npm run build`
+- [x] Set start command: `npm start`
+- [x] Configure cron job for agent loop
+
+**Database (Supabase/Neon)**
+- [x] Create PostgreSQL instance
+- [x] Copy connection string
+- [x] Run migrations: `npx prisma migrate deploy`
+- [x] Seed initial data (optional)
+
+### Environment Variables
+
+**Backend:**
+```bash
+DATABASE_URL=postgresql://...
+REDIS_URL=redis://...
+HYPEREVM_RPC_URL=https://rpc.hyperliquid.xyz/evm
+BACKEND_WALLET_PRIVATE_KEY=0x...
+PEAR_API_BASE_URL=https://api.pear.garden
+PEAR_CLIENT_ID=HLHackathon1
+SALT_FACTORY_ADDRESS=0x...
+ADMIN_ADDRESS=0x...
+AGENT_LOOP_INTERVAL_MS=30000
+```
+
+**Frontend:**
+```bash
+NEXT_PUBLIC_API_URL=https://api.narrativevaults.xyz
+NEXT_PUBLIC_WS_URL=wss://api.narrativevaults.xyz
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=...
+NEXT_PUBLIC_CHAIN_ID=998
+```
+
+### Monitoring & Alerts
+
+- **Uptime**: Pingdom / UptimeRobot
+- **Errors**: Sentry for error tracking
+- **Performance**: New Relic APM
+- **Logs**: Datadog / CloudWatch
+- **Alerts**: PagerDuty for critical issues
+
+### Backup Strategy
+
+- **Database**: Daily automated backups
+- **Redis**: Persistence enabled with AOF
+- **Code**: Git-based version control
+- **Secrets**: Stored in secure vault
+
+---
+
+## Conclusion
+
+This architecture document provides a comprehensive overview of the Narrative Vaults platform, including:
+
+✅ High-level and detailed system architecture  
+✅ Component breakdown with clear responsibilities  
+✅ Multiple diagram types (flow, sequence, ER, deployment)  
+✅ Complete API integration specifications  
+✅ Database schema with relationships  
+✅ Security and risk management strategies  
+✅ Deployment guide with checklists  
+
+The platform leverages modern web technologies, blockchain integrations, and automated risk management to create a unique gamified trading experience.
+
+---
+
+**For additional documentation:**
+- [API Documentation](API_DOCS.md)
+- [Setup Guide](../README.md#getting-started)
+- [Contributing Guidelines](../CONTRIBUTING.md)
+
+**Built with ❤️ for ETH Denver 2026**

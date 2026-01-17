@@ -25,6 +25,11 @@
 
 ---
 
+Multiple users can deposit into narrative “boxes” (vaults) that automatically trade long/short pairs and baskets on Hyperliquid via the Pear Execution API, with risk and permissions enforced by Salt policies and a gamified leveling system
+
+
+---
+
 ## 😩 The Problem
 
 **Pair Trading is Powerful But Complex**

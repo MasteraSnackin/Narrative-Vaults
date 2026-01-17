@@ -130,6 +130,9 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 - **🏆 Social Leaderboards**: Compete with other traders for top rankings
 - **🔐 Non-Custodial**: Your funds, your control - trade through policy-enforced accounts
 
+<img width="1024" height="1024" alt="9e530d87-d9eb-4ab7-8028-6c71f65a2881" src="https://github.com/user-attachments/assets/a6dd3eca-b812-4041-afe7-bb2ea179aa63" />
+
+
 ---
 
 ## 🏗️ Tech Stack

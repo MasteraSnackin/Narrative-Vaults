@@ -55,10 +55,11 @@ export const NARRATIVES: Narrative[] = [
     description: 'Long Bitcoin, Short Altcoins - Flight to quality',
     long_basket: ['BTC'],
     short_basket: ['ETH', 'SOL', 'AVAX'],
-    min_level: 2,
-    base_leverage: 3,
-    max_drawdown: '20',
-    risk_tier: 'high'
+    risk_tier: 'high',
+    market_conditions: {
+      max_volatility: 0.15,
+      trend_direction: 'bullish'
+    }
   }
 ];
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import MarketRiskCard from './MarketRiskCard';
 
 interface Narrative {
   id: string;
@@ -28,9 +29,14 @@ const DepositModal: React.FC<DepositModalProps> = ({
   const [depositAmount, setDepositAmount] = useState<number | string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isTradingAllowed, setIsTradingAllowed] = useState(true);
 
   const handleDeposit = async () => {
     setError(null);
+    if (!isTradingAllowed) {
+      setError('Trading is currently paused due to market conditions.');
+      return;
+    }
     if (typeof depositAmount !== 'number' || depositAmount <= 0) {
       setError('Please enter a valid deposit amount.');
       return;
@@ -60,6 +66,12 @@ const DepositModal: React.FC<DepositModalProps> = ({
         <h2 className="text-3xl font-bold text-white mb-4">Deposit into {narrative.name}</h2>
         <p className="text-gray-400 mb-6">Min Level: {narrative.min_level}, Max Drawdown: {narrative.max_drawdown}</p>
 
+        {/* Market Risk Indicator */}
+        <MarketRiskCard
+          narrativeId={narrative.id}
+          onStatusChange={setIsTradingAllowed}
+        />
+
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
         <div className="mb-4">
@@ -75,7 +87,7 @@ const DepositModal: React.FC<DepositModalProps> = ({
             placeholder="e.g., 1000"
             min="0"
             step="any"
-            disabled={isLoading}
+            disabled={isLoading || !isTradingAllowed}
           />
           <p className="text-gray-500 text-xs mt-1">Your Balance: {userBalance.toFixed(2)} USDC</p>
         </div>
@@ -89,9 +101,9 @@ const DepositModal: React.FC<DepositModalProps> = ({
             Cancel
           </button>
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+            className={`font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 ${isTradingAllowed ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-500 text-gray-300 cursor-not-allowed'}`}
             onClick={handleDeposit}
-            disabled={isLoading || !depositAmount || parseFloat(depositAmount.toString()) <= 0 || parseFloat(depositAmount.toString()) > userBalance}
+            disabled={isLoading || !depositAmount || parseFloat(depositAmount.toString()) <= 0 || parseFloat(depositAmount.toString()) > userBalance || !isTradingAllowed}
           >
             {isLoading ? 'Depositing...' : 'Confirm Deposit'}
           </button>

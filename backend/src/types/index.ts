@@ -1,3 +1,9 @@
+export interface MarketConditions {
+  max_volatility?: number;
+  min_daily_volume?: number;
+  trend_direction?: 'bullish' | 'bearish' | 'neutral';
+}
+
 export interface Narrative {
   id: string;
   name: string;
@@ -8,6 +14,7 @@ export interface Narrative {
   base_leverage: number;
   max_drawdown: string;
   risk_tier: string;
+  market_conditions?: MarketConditions;
 }
 
 export interface User {
@@ -18,6 +25,9 @@ export interface User {
   referral_code: string | null;
   referred_by: string | null;
   created_at: Date;
+  is_public?: boolean;
+  copy_trading_enabled?: boolean;
+  copy_trading_fee?: number;
 }
 
 export interface Vault {

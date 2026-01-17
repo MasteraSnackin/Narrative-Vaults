@@ -5,6 +5,7 @@ import { prepareTradeData, getTradeIdFromTxHash } from './pear.service';
 import { calculateShareTokens } from './vault.service';
 import { awardXP, checkIfFirstDeposit } from './xp.service';
 import { getNarrativeById } from '../config/narratives';
+import { checkMarketConditions } from './market.service';
 
 const prisma = new PrismaClient();
 
@@ -72,12 +73,21 @@ export async function handleUserDeposit(userId: string, narrativeId: string, dep
     if (!narrative) {
       throw new Error(`Narrative ${narrativeId} not found for trade execution.`);
     }
+
+    // Check market conditions before trading
+    const marketCheck = await checkMarketConditions(narrative);
+    if (!marketCheck.allowed) {
+      console.error(`[Deposit] Market conditions not met for ${narrative.name}: ${marketCheck.reason}`);
+      throw new Error(`Cannot execute trade: ${marketCheck.reason}`);
+    }
+    console.log(`[Deposit] Market conditions met for ${narrative.name}`);
+
     const pearTradeData = prepareTradeData(vaultForCalc, narrative);
     const saltTxHash = await executeTradeViaSalt(vault.salt_account_address!, JSON.stringify(pearTradeData)); // Pear trade data needs to be encoded properly
-    
+
     // Assuming getTradeIdFromTxHash can parse the Salt transaction to get the Pear trade ID
-    const tradeId = await getTradeIdFromTxHash(saltTxHash); 
-    
+    const tradeId = await getTradeIdFromTxHash(saltTxHash);
+
     await prisma.vault.update({
       where: { id: vault.id },
       data: { active_position_id: tradeId },

@@ -213,7 +213,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="border-t border-gray-800 py-8 px-8">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <p className="text-gray-500">Narrative Vaults - ETH Denver 2026 Hackathon</p>
+            <p className="text-gray-500">Narrative Vaults</p>
             <div className="flex gap-4 text-gray-500">
               <span>Powered by Salt + Pear + Hyperliquid</span>
             </div>

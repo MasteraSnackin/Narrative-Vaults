@@ -31,6 +31,7 @@ import {
 } from '../services/social.service';
 import { agentMainLoop } from '../agent/agentMainLoop';
 import { NARRATIVES } from '../config/narratives';
+import marketRoutes from './routes/market.routes';
 
 const prisma = new PrismaClient();
 
@@ -44,6 +45,9 @@ interface AuthenticatedRequest extends Request {
 }
 
 export function setupRoutes(app: Express) {
+  // Market Data Routes
+  app.use('/api/market', marketRoutes);
+
   // General Endpoints
   app.get('/api/narratives', (_req: Request, res: Response) => {
     res.json(NARRATIVES);

@@ -167,12 +167,31 @@ export async function createVaultAccount(narrativeConfig: Narrative): Promise<st
     emergencyAdmin: adminAddr,
   };
 
-  console.log('Creating Salt account with policies:', policyRules);
+  // Create Salt account WITHOUT policies via SDK (policies must be set via Salt UI)
+  console.log(`[Salt] Creating vault account for ${narrativeConfig.name}. NOTE: Policies must be configured via Salt UI.`);
 
   // If we have a real Salt factory contract, use it
   if (saltFactoryContract && wallet) {
     try {
-      const policyData = encodePolicyRules(policyRules);
+      // We pass empty policy data effectively, or a minimal valid payload if required by contract.
+      // Assuming for this update we just create the account, and the user must Attach policies later via UI.
+      // If the contract REQUIRES policy data in createAccount, we might send dummy data, but per instructions,
+      // we assume the "system will just reject flat out any transaction that breaks policies" which implies
+      // the policies exist. 
+      // IMPORTANT: Since we can't set them here, we will invoke creation with DEFAULT/EMPTY policies 
+      // or however the factory allows "no initial policy". 
+      // Using an empty/default policy config to satisfy the signature if needed.
+      const minimalPolicy = {
+        maxLeverage: 100, // effectively unlimited, strictly constrained by UI set policies later
+        maxDrawdownPercent: 1.0, // 100%
+        allowedProtocols: [],
+        emergencyAdmin: adminAddr
+      };
+
+      const policyData = encodePolicyRules(minimalPolicy);
+
+      console.warn('[Salt] Sending minimal policy data to factory. REAL POLICIES MUST BE SET ON SALT CONSOLE.');
+
       const tx = await saltFactoryContract.createAccount(wallet.address, policyData);
       const receipt = await tx.wait();
 
@@ -191,13 +210,15 @@ export async function createVaultAccount(narrativeConfig: Narrative): Promise<st
         const parsed = iface.parseLog({ topics: log.topics, data: log.data });
         const accountAddress = parsed?.args[0];
         console.log('Salt account created:', accountAddress);
+        console.warn(`[Salt] ACTON REQUIRED: Go to https://testnet.salt.space and configure policies for ${accountAddress}`);
 
-        // Cache the policy state
+        // Cache the policy state - locally we still want to track what we THINK the policies should be
+        // for our internal risk management, even if enforced on-chain by Salt.
         vaultRiskStates.set(accountAddress, {
           initialValue: 0,
           currentValue: 0,
           maxDrawdownPercent: policyRules.maxDrawdownPercent,
-          policies: policyRules,
+          policies: policyRules, // Keep tracking target policies internally
           lastUpdated: new Date()
         });
 

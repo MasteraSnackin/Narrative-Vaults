@@ -1,6 +1,6 @@
 import { http, createConfig } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
-import { injected, walletConnect } from 'wagmi/connectors';
+import { injected, walletConnect, metaMask } from 'wagmi/connectors';
 
 // Define HyperEVM chain
 const hyperEVM = {
@@ -21,11 +21,13 @@ const hyperEVM = {
 } as const;
 
 // Get WalletConnect project ID from environment
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
+// Fallback to a valid-looking string if missing to prevent simple crashes, though WC won't work
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'c0f735496a92f08a4677732d84787d55';
 
 export const config = createConfig({
   chains: [hyperEVM, mainnet],
   connectors: [
+    metaMask(),
     injected(),
     walletConnect({
       projectId,

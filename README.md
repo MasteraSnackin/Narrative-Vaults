@@ -19,9 +19,28 @@
 
 [Demo](https://narrativevaults.xyz/) | [Documentation](docs/ARCHITECTURE.md) | [API Reference](docs/API_DOCS.md)
 
+
+
 </div>
 
 ---
+
+Multiple users can deposit into narrative “boxes” (vaults) that automatically trade long/short pairs and baskets on Hyperliquid via the Pear Execution API, with risk and permissions enforced by Salt policies and a gamified leveling system
+
+
+---
+
+## 😩 The Problem
+
+**Pair Trading is Powerful But Complex**
+
+While pair trading is one of the most sophisticated trading strategies used by hedge funds and institutional investors, it remains largely inaccessible to retail traders:
+
+- ❌ **Requires managing multiple positions**: Coordinating long and short positions across different assets is technically challenging
+- ❌ **Understand narratives but can't execute**: Traders see market opportunities but lack the tools to act on them efficiently  
+- ❌ **Most retail traders never attempt it**: The complexity barrier prevents 95% of retail traders from using this proven strategy
+
+**Our Solution: Narrative Vaults makes pair trading as simple as a single click** 🚀
 
 ## 🌟 Overview
 
@@ -36,6 +55,67 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 - **🏆 Social Leaderboards**: Compete with other traders for top rankings
 - **🔐 Non-Custodial**: Your funds, your control - trade through policy-enforced accounts
 
+## ⚙️ How It Works
+
+**Simple 3-Step Process:**
+
+1️⃣ **One-Click Deposit** 💰
+- Users deposit funds with a single click
+- Funds are allocated to a Salt Policy Account for secure trading
+
+2️⃣ **Automated Trading** 🤖
+- Agent Loop runs every 30 seconds, monitoring market conditions
+- Pear API executes pair trades automatically on Hyperliquid
+- Salt Protocol enforces risk limits and protects your capital
+
+3️⃣ **Earn & Level Up** 🎮
+- Profitable trades earn XP
+- Level up to unlock advanced narratives with higher leverage
+- Track progress on social leaderboards
+
+**Technical Architecture Flow:**
+
+```
+👥 User Deposit → 🛡️ Salt Policy Account → 🎲 Hyperliquid
+                     ↓                      ↑
+            ⏰ Agent Loop (30s)    ←  🍍 Pear API
+```
+
+**Key Components:**
+- ✅ **Salt Protocol**: Enforces risk limits and automatic liquidation on breach
+- ✅ **Pear Protocol SDK**: Executes pair/basket trades seamlessly  
+- ✅ **Hyperliquid**: High-performance perpetual DEX for trade settlement
+- ✅ **Automated Agent**: 30-second loop for real-time market response
+
+## 🎯 Why Choose Narrative Vaults?
+
+**✅ Accessible**
+- No complex setup or technical knowledge required
+- One-click deposit to start trading narratives
+- User-friendly dashboard for all experience levels
+
+**🛡️ Safe**
+- Non-custodial: Your funds, your control
+- Salt Protocol security policies enforce risk limits
+- Automatic drawdown protection prevents catastrophic losses
+- Rate limiting and input validation on all endpoints
+
+**🎮 Engaging**
+- Gamified XP system makes trading fun and rewarding  
+- Level progression unlocks new strategies
+- Social leaderboards foster friendly competition
+- Real-time updates keep you in the action
+
+**📊 Real Volume**
+- All trades execute on Hyperliquid with actual liquidity
+- Transparent on-chain settlement
+- No paper trading – real profits from real markets
+
+---
+
+<img width="1024" height="1024" alt="9e530d87-d9eb-4ab7-8028-6c71f65a2881" src="https://github.com/user-attachments/assets/a6dd3eca-b812-4041-afe7-bb2ea179aa63" />
+
+
 ---
 
 ## 🏗️ Tech Stack
@@ -48,6 +128,30 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 | [HyperEVM](https://hyperliquid.xyz/) | EVM-compatible blockchain (Chain ID: 998) |
 
 ---
+
+## 🎬 Presentation
+
+<div align="center">
+
+### 📊 View Full Presentation
+
+**The Pair Trading Problem & Solution**
+
+[<img src="https://img.shields.io/badge/📊_Download_Presentation-4285F4?style=for-the-badge&logo=google-slides&logoColor=white" alt="Download Presentation">](https://github.com/user-attachments/files/24689966/The-Pair-Trading-Problem.pptx)
+
+*Click above to download the complete PowerPoint presentation covering:*
+- The Problem: Why pair trading is complex for retail traders
+- Our Solution: One-click narrative trading
+- How It Works: 3-step automated process
+- Platform Benefits: Accessible • Safe • Engaging • Real Volume
+- Architecture: Technical implementation details
+
+</div>
+
+[The-Pair-Trading-Problem.pptx](https://github.com/user-attachments/files/24689966/The-Pair-Trading-Problem.pptx)
+
+---
+
 
 ## ✨ Key Features
 
@@ -393,6 +497,34 @@ npm run lint      # Run ESLint
 - ✅ TypeScript strict mode enabled
 - ✅ ESLint + Prettier for code formatting
 - ✅ Conventional commits for version control
+
+---
+
+### 🆕 Recent Updates
+
+**Version 0.1.0** (January 15, 2025)
+
+#### Added Features
+- ✅ **Pear Protocol SDK Integration**: Seamless automated pair trade execution through official SDK
+- ✅ **Smart Contract Integration**: Salt Protocol for access control and risk management
+- ✅ **XP & Leveling System**: Gamified user progression tracking with achievements
+- ✅ **Multiple Narrative Strategies**: AI, DeFi, GameFi, Layer 1, and Layer 2 narratives
+- ✅ **Real-time WebSocket Connections**: Live trading updates and P&L tracking
+- ✅ **User Dashboard**: Portfolio analytics and position tracking
+- ✅ **Social Leaderboards**: Compete with other traders for rankings
+- ✅ **Risk Management**: Automatic drawdown protection through Salt policies
+
+#### Security Enhancements
+- 🔐 Salt Protocol security policies implementation
+- 🔐 API key encryption for exchange credentials
+- 🔐 Rate limiting on all API endpoints
+- 🔐 Input validation and sanitization
+
+#### Documentation
+- 📚 Comprehensive README with project overview
+- 📚 Architecture documentation with system diagrams
+- 📚 API documentation with endpoint specifications
+- 📚 Contributing guidelines and security policy
 
 ---
 

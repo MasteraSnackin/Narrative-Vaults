@@ -426,9 +426,9 @@ Contributions are welcome! Please follow these steps:
 
 Narrative Vaults was built to showcase the power of combining:
 
-- Salt Protocol's programmable capital
-- Pear Protocol's execution API
-- Hyperliquid's perpetual DEX
+- [Salt Protocol](https://salt.xyz) - Programmable capital infrastructure
+- [Pear Protocol](https://pear.garden) - Pair trading execution
+- [Hyperliquid](https://hyperliquid.xyz) - High-performance perpetual DEX
 - Gamification mechanics for trader engagement
 
 ---

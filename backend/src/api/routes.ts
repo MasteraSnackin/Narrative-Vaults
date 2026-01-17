@@ -9,6 +9,26 @@ import {
   canUserWithdraw,
   getWithdrawalHistory
 } from '../services/withdrawal.service';
+import {
+  followUser,
+  unfollowUser,
+  getFollowers,
+  getFollowing,
+  getFollowStats,
+  followVault,
+  unfollowVault,
+  getFollowedVaults,
+  getVaultFollowers,
+  isFollowingVault,
+  startCopyTrading,
+  stopCopyTrading,
+  getCopyTradeSettings,
+  getMyCopyTrades,
+  getMyCopiers,
+  getUserProfile,
+  updateUserProfile,
+  getTopTraders,
+} from '../services/social.service';
 import { agentMainLoop } from '../agent/agentMainLoop';
 import { NARRATIVES } from '../config/narratives';
 
@@ -302,5 +322,263 @@ export function setupRoutes(app: Express) {
       timestamp: new Date().toISOString(),
       version: '1.0.0'
     });
+  });
+
+  // ==================== SOCIAL FEATURES ====================
+
+  // User Profile
+  app.get('/api/profile/:walletAddress', async (req: AuthenticatedRequest, res: Response) => {
+    const { walletAddress } = req.params;
+    try {
+      const viewerId = req.user?.id;
+      const profile = await getUserProfile(walletAddress, viewerId);
+      if (!profile) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.json(profile);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put('/api/profile', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const { username, bio, avatar_url, is_public, copy_trading_enabled, copy_trading_fee } = req.body;
+      const updated = await updateUserProfile(req.user.id, {
+        username,
+        bio,
+        avatar_url,
+        is_public,
+        copy_trading_enabled,
+        copy_trading_fee,
+      });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // User Following
+  app.post('/api/users/:walletAddress/follow', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      await followUser(req.user.id, req.params.walletAddress);
+      res.json({ message: 'Successfully followed user' });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/users/:walletAddress/follow', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      await unfollowUser(req.user.id, req.params.walletAddress);
+      res.json({ message: 'Successfully unfollowed user' });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/users/:walletAddress/followers', async (req: Request, res: Response) => {
+    const { walletAddress } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    try {
+      const user = await prisma.user.findUnique({ where: { wallet_address: walletAddress } });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      const result = await getFollowers(user.id, page, limit);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/users/:walletAddress/following', async (req: Request, res: Response) => {
+    const { walletAddress } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    try {
+      const user = await prisma.user.findUnique({ where: { wallet_address: walletAddress } });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      const result = await getFollowing(user.id, page, limit);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/users/:walletAddress/stats', async (req: Request, res: Response) => {
+    const { walletAddress } = req.params;
+    try {
+      const user = await prisma.user.findUnique({ where: { wallet_address: walletAddress } });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      const stats = await getFollowStats(user.id);
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Vault Following
+  app.post('/api/vaults/:vaultId/follow', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const { notifyOnDeposit, notifyOnTrade } = req.body;
+      await followVault(req.user.id, req.params.vaultId, { notifyOnDeposit, notifyOnTrade });
+      res.json({ message: 'Successfully followed vault' });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/vaults/:vaultId/follow', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      await unfollowVault(req.user.id, req.params.vaultId);
+      res.json({ message: 'Successfully unfollowed vault' });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/vaults/:vaultId/followers', async (req: Request, res: Response) => {
+    try {
+      const result = await getVaultFollowers(req.params.vaultId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/vaults/:vaultId/is-following', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const following = await isFollowingVault(req.user.id, req.params.vaultId);
+      res.json({ following });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/user/followed-vaults', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const vaults = await getFollowedVaults(req.user.id);
+      res.json(vaults);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Copy Trading
+  app.get('/api/copy-trading/top-traders', async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 20;
+    try {
+      const traders = await getTopTraders(limit);
+      res.json(traders);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/copy-trading/start', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const { leaderId, allocationAmount, allocationPercent, maxPositionSize, copyAllVaults, vaultIds } = req.body;
+
+      if (!leaderId) {
+        return res.status(400).json({ message: 'Leader ID is required' });
+      }
+
+      const copyTrade = await startCopyTrading(req.user.id, {
+        leaderId,
+        allocationAmount: allocationAmount || 0,
+        allocationPercent: allocationPercent || 0,
+        maxPositionSize: maxPositionSize || 10000,
+        copyAllVaults: copyAllVaults ?? true,
+        vaultIds,
+      });
+
+      res.json({ message: 'Copy trading started successfully', copyTrade });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/copy-trading/stop', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const { leaderId } = req.body;
+      if (!leaderId) {
+        return res.status(400).json({ message: 'Leader ID is required' });
+      }
+      await stopCopyTrading(req.user.id, leaderId);
+      res.json({ message: 'Copy trading stopped successfully' });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/copy-trading/settings/:leaderId', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const settings = await getCopyTradeSettings(req.user.id, req.params.leaderId);
+      res.json(settings || { active: false });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/copy-trading/my-trades', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const copyTrades = await getMyCopyTrades(req.user.id);
+      res.json(copyTrades);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/copy-trading/my-copiers', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    try {
+      const copiers = await getMyCopiers(req.user.id);
+      res.json(copiers);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
   });
 }

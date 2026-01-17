@@ -77,3 +77,64 @@ export interface RiskEvent {
   action_taken: string;
   created_at: string;
 }
+
+// Social Features
+
+export interface UserProfile {
+  id: string;
+  wallet_address: string;
+  username: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  total_xp: number;
+  current_level: number;
+  is_public: boolean;
+  copy_trading_enabled: boolean;
+  copy_trading_fee: number;
+  follower_count: number;
+  following_count: number;
+  total_pnl: number;
+  is_following?: boolean;
+  is_copy_trading?: boolean;
+}
+
+export interface FollowStats {
+  followers: number;
+  following: number;
+  vault_follows: number;
+  copy_traders: number;
+  copying_from: number;
+}
+
+export interface CopyTrade {
+  id: string;
+  follower_id: string;
+  leader_id: string;
+  allocation_amount: number;
+  allocation_percent: number;
+  max_position_size: number;
+  is_active: boolean;
+  copy_all_vaults: boolean;
+  vault_ids: string[];
+  total_copied_pnl: number;
+  fees_paid: number;
+  created_at: string;
+  updated_at: string;
+  leader?: {
+    id: string;
+    wallet_address: string;
+    username: string | null;
+    avatar_url: string | null;
+    current_level: number;
+    copy_trading_fee: number;
+  };
+}
+
+export interface CopyTradeSettings {
+  leaderId: string;
+  allocationAmount: number;
+  allocationPercent: number;
+  maxPositionSize: number;
+  copyAllVaults: boolean;
+  vaultIds?: string[];
+}

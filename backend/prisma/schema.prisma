@@ -10,15 +10,26 @@ datasource db {
 model User {
   id             String          @id @default(uuid())
   wallet_address String          @unique @db.VarChar(42)
+  username       String?         @unique @db.VarChar(30)
+  bio            String?         @db.VarChar(200)
+  avatar_url     String?         @db.VarChar(255)
   total_xp       Int             @default(0)
   current_level  Int             @default(1)
   referral_code  String?         @unique @db.VarChar(8)
   referred_by    User?           @relation("ReferredUsers", fields: [referred_by_id], references: [id])
   referred_by_id String?         @map("referred_by")
+  is_public      Boolean         @default(true)
+  copy_trading_enabled Boolean   @default(false)
+  copy_trading_fee Decimal       @default(0) @db.Decimal(5, 2) // Fee percentage for copy traders
   created_at     DateTime        @default(now())
   VaultPositions VaultPosition[]
   XPEvents       XPEvent[]
   ReferredUsers  User[]          @relation("ReferredUsers")
+  Followers      UserFollow[]    @relation("Following")
+  Following      UserFollow[]    @relation("Followers")
+  VaultFollows   VaultFollow[]
+  CopyTraders    CopyTrade[]     @relation("CopyTradeLeader")
+  CopyingFrom    CopyTrade[]     @relation("CopyTradeFollower")
 
   @@map("users")
 }
@@ -36,6 +47,7 @@ model Vault {
   Trades               Trade[]
   RiskEvents           RiskEvent[]
   XPEvents             XPEvent[]
+  VaultFollows         VaultFollow[]
 
   @@map("vaults")
 }
@@ -99,4 +111,70 @@ model RiskEvent {
   vault                Vault     @relation(fields: [vault_id], references: [id])
 
   @@map("risk_events")
+}
+
+// Social Features
+
+model UserFollow {
+  id           String   @id @default(uuid())
+  follower_id  String
+  following_id String
+  created_at   DateTime @default(now())
+  follower     User     @relation("Followers", fields: [follower_id], references: [id], onDelete: Cascade)
+  following    User     @relation("Following", fields: [following_id], references: [id], onDelete: Cascade)
+
+  @@unique([follower_id, following_id])
+  @@map("user_follows")
+}
+
+model VaultFollow {
+  id         String   @id @default(uuid())
+  user_id    String
+  vault_id   String
+  notify_on_deposit  Boolean @default(true)
+  notify_on_trade    Boolean @default(true)
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vault      Vault    @relation(fields: [vault_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, vault_id])
+  @@map("vault_follows")
+}
+
+model CopyTrade {
+  id                String   @id @default(uuid())
+  follower_id       String
+  leader_id         String
+  allocation_amount Decimal  @db.Decimal(18, 6) // Amount allocated for copy trading
+  allocation_percent Decimal @db.Decimal(5, 2)  // Or percentage of portfolio
+  max_position_size Decimal  @db.Decimal(18, 6) // Max size per position
+  is_active         Boolean  @default(true)
+  copy_all_vaults   Boolean  @default(true)     // Copy all or specific vaults
+  vault_ids         String[] // Specific vault IDs to copy (if not all)
+  total_copied_pnl  Decimal  @default(0) @db.Decimal(18, 6)
+  fees_paid         Decimal  @default(0) @db.Decimal(18, 6)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  follower          User     @relation("CopyTradeFollower", fields: [follower_id], references: [id], onDelete: Cascade)
+  leader            User     @relation("CopyTradeLeader", fields: [leader_id], references: [id], onDelete: Cascade)
+  CopyTradeActions  CopyTradeAction[]
+
+  @@unique([follower_id, leader_id])
+  @@map("copy_trades")
+}
+
+model CopyTradeAction {
+  id              String    @id @default(uuid())
+  copy_trade_id   String
+  original_trade_id String?
+  vault_id        String
+  action_type     String    @db.VarChar(20) // 'deposit', 'withdraw', 'open', 'close'
+  amount          Decimal   @db.Decimal(18, 6)
+  status          String    @db.VarChar(20) // 'pending', 'executed', 'failed'
+  error_message   String?
+  executed_at     DateTime?
+  created_at      DateTime  @default(now())
+  copyTrade       CopyTrade @relation(fields: [copy_trade_id], references: [id], onDelete: Cascade)
+
+  @@map("copy_trade_actions")
 }

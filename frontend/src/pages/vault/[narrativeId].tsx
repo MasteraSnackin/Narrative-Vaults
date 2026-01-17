@@ -4,10 +4,15 @@ import { Fragment, useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { NARRATIVES } from '../../utils/constants';
 import LivePnLChart from '../../components/LivePnLChart';
+import AdvancedChart from '../../components/AdvancedChart';
+import ComparisonChart from '../../components/ComparisonChart';
 import DepositModal from '../../components/DepositModal';
 import WalletConnectButton from '../../components/WalletConnectButton';
 import { api } from '../../utils/api';
 import { Vault, VaultPosition, Narrative } from '../../types';
+import { usePosition, useMarket } from '@pear-protocol/hyperliquid-sdk';
+
+type ChartView = 'simple' | 'advanced';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
 
@@ -15,6 +20,10 @@ export default function VaultDetail() {
   const router = useRouter();
   const { narrativeId } = router.query;
   const { address, isConnected } = useAccount();
+
+  // Pear SDK hooks for real-time position and market data
+  const { openPositions, isLoading: positionsLoading } = usePosition();
+  const { allTokenMetadata, getAssetByName } = useMarket();
 
   const [vault, setVault] = useState<Vault | null>(null);
   const [position, setPosition] = useState<VaultPosition | null>(null);
@@ -27,6 +36,29 @@ export default function VaultDetail() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawPreview, setWithdrawPreview] = useState<any>(null);
+  const [chartView, setChartView] = useState<ChartView>('advanced');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
+
+  // Vault followers state
+  const [isFollowingVault, setIsFollowingVault] = useState(false);
+  const [vaultFollowers, setVaultFollowers] = useState<{ count: number; followers: any[] }>({ count: 0, followers: [] });
+  const [followLoading, setFollowLoading] = useState(false);
+
+  // Filter positions for this vault's assets
+  const vaultPositions = (openPositions || []).filter((pos) => {
+    if (!narrative) return false;
+    // Check if any of the position's assets match the narrative's baskets
+    const posLongAssets = pos.longAssets?.map(a => a.coin) || [];
+    const posShortAssets = pos.shortAssets?.map(a => a.coin) || [];
+    const allPosAssets = [...posLongAssets, ...posShortAssets];
+    const narrativeAssets = [...narrative.long_basket, ...narrative.short_basket];
+    return allPosAssets.some(asset => narrativeAssets.includes(asset));
+  });
+
+  // Calculate real-time P&L from SDK positions
+  const liveUnrealizedPnl = vaultPositions.reduce((sum: number, pos) => {
+    return sum + (pos.unrealizedPnl || 0);
+  }, 0);
 
   // Find narrative from constants
   useEffect(() => {
@@ -47,10 +79,19 @@ export default function VaultDetail() {
   useEffect(() => {
     if (isAuthenticated && vault) {
       fetchUserPosition();
+      fetchVaultFollowStatus();
     } else {
       setPosition(null);
+      setIsFollowingVault(false);
     }
   }, [isAuthenticated, vault]);
+
+  // Fetch vault followers
+  useEffect(() => {
+    if (vault) {
+      fetchVaultFollowers();
+    }
+  }, [vault]);
 
   const fetchVaultData = async () => {
     setLoading(true);
@@ -81,6 +122,45 @@ export default function VaultDetail() {
       setPosition(pos);
     } catch {
       setPosition(null);
+    }
+  };
+
+  const fetchVaultFollowers = async () => {
+    if (!vault) return;
+    try {
+      const data = await api.getVaultFollowers(vault.id);
+      setVaultFollowers(data);
+    } catch {
+      // Ignore errors
+    }
+  };
+
+  const fetchVaultFollowStatus = async () => {
+    if (!vault) return;
+    try {
+      const { following } = await api.isFollowingVault(vault.id);
+      setIsFollowingVault(following);
+    } catch {
+      setIsFollowingVault(false);
+    }
+  };
+
+  const handleFollowVault = async () => {
+    if (!vault) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowingVault) {
+        await api.unfollowVault(vault.id);
+        setIsFollowingVault(false);
+      } else {
+        await api.followVault(vault.id);
+        setIsFollowingVault(true);
+      }
+      await fetchVaultFollowers();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update follow status');
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -212,6 +292,84 @@ export default function VaultDetail() {
                 </div>
               </div>
             </div>
+
+            {/* Live Positions from Pear SDK */}
+            {vaultPositions.length > 0 && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-600/30">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold">Live Positions (via Pear SDK)</h3>
+                  <span className={`text-lg font-mono ${liveUnrealizedPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {liveUnrealizedPnl >= 0 ? '+' : ''}{liveUnrealizedPnl.toFixed(2)} USDC
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {vaultPositions.map((pos, idx) => {
+                    const longAssetNames = pos.longAssets?.map(a => a.coin).join('/') || '';
+                    const shortAssetNames = pos.shortAssets?.map(a => a.coin).join('/') || '';
+                    const displayName = `${longAssetNames} / ${shortAssetNames}`;
+                    return (
+                      <div key={pos.positionId || idx} className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <span className="px-2 py-1 text-xs rounded bg-purple-900/50 text-purple-400">
+                            PAIR
+                          </span>
+                          <span className="font-mono text-sm">{displayName}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-mono">${(pos.positionValue || 0).toFixed(2)}</span>
+                          <span className={`font-mono ${(pos.unrealizedPnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {(pos.unrealizedPnl || 0) >= 0 ? '+' : ''}{(pos.unrealizedPnl || 0).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Vault Followers */}
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Vault Followers</h3>
+                  <p className="text-sm text-gray-400">{vaultFollowers.count} people following this vault</p>
+                </div>
+                {isAuthenticated && vault && (
+                  <button
+                    onClick={handleFollowVault}
+                    disabled={followLoading}
+                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                      isFollowingVault
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {followLoading ? '...' : isFollowingVault ? 'Unfollow' : 'Follow Vault'}
+                  </button>
+                )}
+              </div>
+
+              {/* Recent Followers */}
+              {vaultFollowers.followers.length > 0 && (
+                <div className="flex -space-x-2 mt-3">
+                  {vaultFollowers.followers.slice(0, 5).map((follower, idx) => (
+                    <div
+                      key={follower.id || idx}
+                      className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-gray-800 flex items-center justify-center text-xs font-bold"
+                      title={follower.username || follower.wallet_address}
+                    >
+                      {follower.username?.charAt(0).toUpperCase() || follower.wallet_address?.charAt(2).toUpperCase()}
+                    </div>
+                  ))}
+                  {vaultFollowers.count > 5 && (
+                    <div className="w-8 h-8 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center text-xs">
+                      +{vaultFollowers.count - 5}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Actions Panel */}
@@ -292,10 +450,69 @@ export default function VaultDetail() {
           </div>
         </div>
 
-        {/* Live P&L Chart */}
+        {/* Charts Section */}
         {vault && (
           <section className="mb-12">
-            <LivePnLChart vaultId={vault.id} websocketEndpoint={WS_URL} />
+            {/* Chart View Toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold">Performance Chart</h2>
+              <div className="flex bg-gray-800 rounded-lg p-1">
+                <button
+                  onClick={() => setChartView('advanced')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    chartView === 'advanced'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Advanced Chart
+                </button>
+                <button
+                  onClick={() => setChartView('simple')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    chartView === 'simple'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Simple P&L
+                </button>
+              </div>
+            </div>
+
+            {/* Chart Content */}
+            {chartView === 'advanced' ? (
+              <AdvancedChart
+                vaultId={vault.id}
+                narrativeId={narrativeId as string}
+                height={500}
+                showVolume={true}
+                showIndicators={true}
+                onTimeframeChange={setSelectedTimeframe}
+              />
+            ) : (
+              <LivePnLChart vaultId={vault.id} websocketEndpoint={WS_URL} />
+            )}
+
+            {/* Timeframe Info */}
+            {chartView === 'advanced' && (
+              <p className="text-sm text-gray-500 mt-2">
+                Current timeframe: {selectedTimeframe} | Data updates in real-time via WebSocket
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Basket Comparison Chart */}
+        {vault && narrative && (
+          <section className="mb-12">
+            <ComparisonChart
+              vaultId={vault.id}
+              narrativeId={narrativeId as string}
+              longBasket={narrative.long_basket}
+              shortBasket={narrative.short_basket}
+              height={400}
+            />
           </section>
         )}
 

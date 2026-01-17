@@ -1,4 +1,4 @@
-import { Narrative, User, Vault, VaultPosition, Trade, XPEvent } from '../types';
+import { Narrative, User, Vault, VaultPosition, Trade, XPEvent, UserProfile, FollowStats, CopyTrade, CopyTradeSettings } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -219,6 +219,123 @@ class ApiClient {
     version: string;
   }> {
     return this.request('/api/health');
+  }
+
+  // ==========================================
+  // Social Features - User Profile
+  // ==========================================
+
+  async getProfile(walletAddress: string): Promise<UserProfile> {
+    return this.request<UserProfile>(`/api/profile/${walletAddress}`);
+  }
+
+  async updateProfile(data: {
+    username?: string;
+    bio?: string;
+    avatar_url?: string;
+    is_public?: boolean;
+    copy_trading_enabled?: boolean;
+    copy_trading_fee?: number;
+  }): Promise<any> {
+    return this.request('/api/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ==========================================
+  // Social Features - User Following
+  // ==========================================
+
+  async followUser(walletAddress: string): Promise<{ message: string }> {
+    return this.request(`/api/users/${walletAddress}/follow`, {
+      method: 'POST',
+    });
+  }
+
+  async unfollowUser(walletAddress: string): Promise<{ message: string }> {
+    return this.request(`/api/users/${walletAddress}/follow`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getFollowers(walletAddress: string, page = 1, limit = 20): Promise<{ users: UserProfile[]; total: number }> {
+    return this.request(`/api/users/${walletAddress}/followers?page=${page}&limit=${limit}`);
+  }
+
+  async getFollowing(walletAddress: string, page = 1, limit = 20): Promise<{ users: UserProfile[]; total: number }> {
+    return this.request(`/api/users/${walletAddress}/following?page=${page}&limit=${limit}`);
+  }
+
+  async getUserStats(walletAddress: string): Promise<FollowStats> {
+    return this.request(`/api/users/${walletAddress}/stats`);
+  }
+
+  // ==========================================
+  // Social Features - Vault Following
+  // ==========================================
+
+  async followVault(vaultId: string, options?: { notifyOnDeposit?: boolean; notifyOnTrade?: boolean }): Promise<{ message: string }> {
+    return this.request(`/api/vaults/${vaultId}/follow`, {
+      method: 'POST',
+      body: JSON.stringify(options || {}),
+    });
+  }
+
+  async unfollowVault(vaultId: string): Promise<{ message: string }> {
+    return this.request(`/api/vaults/${vaultId}/follow`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getVaultFollowers(vaultId: string): Promise<{ count: number; followers: any[] }> {
+    return this.request(`/api/vaults/${vaultId}/followers`);
+  }
+
+  async isFollowingVault(vaultId: string): Promise<{ following: boolean }> {
+    return this.request(`/api/vaults/${vaultId}/is-following`);
+  }
+
+  async getFollowedVaults(): Promise<any[]> {
+    return this.request('/api/user/followed-vaults');
+  }
+
+  // ==========================================
+  // Social Features - Copy Trading
+  // ==========================================
+
+  async getTopTraders(limit = 20): Promise<UserProfile[]> {
+    return this.request(`/api/copy-trading/top-traders?limit=${limit}`);
+  }
+
+  async startCopyTrading(settings: CopyTradeSettings): Promise<{ message: string; copyTrade: CopyTrade }> {
+    return this.request('/api/copy-trading/start', {
+      method: 'POST',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  async stopCopyTrading(leaderId: string): Promise<{ message: string }> {
+    return this.request('/api/copy-trading/stop', {
+      method: 'POST',
+      body: JSON.stringify({ leaderId }),
+    });
+  }
+
+  async getCopyTradeSettings(leaderId: string): Promise<CopyTrade | null> {
+    const result = await this.request<CopyTrade | { active: false }>(`/api/copy-trading/settings/${leaderId}`);
+    if ('active' in result && result.active === false) {
+      return null;
+    }
+    return result as CopyTrade;
+  }
+
+  async getMyCopyTrades(): Promise<CopyTrade[]> {
+    return this.request('/api/copy-trading/my-trades');
+  }
+
+  async getMyCopiers(): Promise<any[]> {
+    return this.request('/api/copy-trading/my-copiers');
   }
 }
 

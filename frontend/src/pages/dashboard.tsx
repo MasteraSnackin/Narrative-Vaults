@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Fragment, useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import XPProgressBar from '../components/XPProgressBar';
+import PortfolioChart from '../components/PortfolioChart';
 import WalletConnectButton from '../components/WalletConnectButton';
 import { api } from '../utils/api';
 import { User, Vault, VaultPosition } from '../types';
@@ -157,7 +158,7 @@ export default function Dashboard() {
             {/* Portfolio Summary */}
             <section className="mb-12">
               <h2 className="text-2xl font-semibold mb-4">Portfolio Summary</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="bg-gray-800 p-6 rounded-lg">
                   <p className="text-gray-400 text-sm">Total Deposited</p>
                   <p className="text-2xl font-bold">${totalDeposits.toFixed(2)}</p>
@@ -173,6 +174,9 @@ export default function Dashboard() {
                   <p className="text-2xl font-bold">{positions.length}</p>
                 </div>
               </div>
+
+              {/* Portfolio Performance Chart */}
+              <PortfolioChart walletAddress={address} height={300} />
             </section>
 
             {/* Active Positions */}

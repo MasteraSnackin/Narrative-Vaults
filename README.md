@@ -4,6 +4,12 @@
 
 ![Narrative Vaults Banner](docs/assets/banner.png)
 
+[![GitHub Stars](https://img.shields.io/github/stars/MasteraSnackin/Narrative-Vaults?style=flat-square)](https://github.com/MasteraSnackin/Narrative-Vaults/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/MasteraSnackin/Narrative-Vaults?style=flat-square)](https://github.com/MasteraSnackin/Narrative-Vaults/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/MasteraSnackin/Narrative-Vaults?style=flat-square)](https://github.com/MasteraSnackin/Narrative-Vaults/issues)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/MasteraSnackin/Narrative-Vaults?style=flat-square)](https://github.com/MasteraSnackin/Narrative-Vaults/commits/main)
+[![Code Size](https://img.shields.io/github/languages/code-size/MasteraSnackin/Narrative-Vaults?style=flat-square)](https://github.com/MasteraSnackin/Narrative-Vaults)
+
 **🎮 A Gamified Pair Trading Platform for Market Narratives**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)

@@ -186,7 +186,7 @@ NEXT_PUBLIC_CHAIN_ID=998
 
 ## 🏛️ Architecture
 
-```
+
 
 ### System Architecture Diagram
 

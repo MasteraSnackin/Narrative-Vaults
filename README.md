@@ -12,7 +12,7 @@
 
 **🎮 A Gamified Pair Trading Platform for Market Narratives**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MasteraSnackin/Narrative-Vaults/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
@@ -41,7 +41,7 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 ## 🏗️ Tech Stack
 
 | Technology | Purpose |
-|------------|---------|
+|------------|--------|
 | [Salt Protocol](https://salt.xyz/) | Policy-controlled trading accounts & risk management |
 | [Pear Protocol](https://pear.garden/) | Pair/basket trade execution API |
 | [Hyperliquid](https://hyperliquid.xyz/) | Perpetual DEX for trade settlement |
@@ -52,22 +52,27 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 ## ✨ Key Features
 
 ### 📈 Narrative-Based Trading
+
 Trade crypto market themes and narratives, not just individual tokens. Each vault represents a bet on one narrative outperforming another through automated long/short pair trades.
 
 ### 🎮 Gamification & Progression
+
 - **Earn XP**: Gain experience points for profitable trades
 - **Level Up**: Unlock advanced narratives with higher leverage
 - **Leaderboards**: Compete for top trader rankings
 - **Achievements**: Complete challenges to earn rewards
 
 ### 🛡️ Enterprise-Grade Risk Management
+
 Powered by Salt Protocol's programmable capital infrastructure:
+
 - **Policy-Enforced Accounts**: All trades execute through Salt policy accounts
 - **Automatic Drawdown Protection**: Positions close automatically to protect capital
 - **Leverage Limits**: Maximum leverage controlled by user level
 - **Emergency Pause**: Admin controls for critical situations
 
 ### ⚡ Real-Time Experience
+
 - **Live P&L Tracking**: WebSocket connections for instant updates
 - **Position Monitoring**: Track your trades in real-time
 - **Market Data**: Live price feeds from Hyperliquid
@@ -107,7 +112,7 @@ cd narrative-vaults
 cd backend
 npm install
 
-# 3. Install frontend dependencies  
+# 3. Install frontend dependencies
 cd ../frontend
 npm install
 
@@ -131,6 +136,7 @@ npm run dev
 ```
 
 The application will be available at:
+
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
 - **API Health**: http://localhost:3001/api/health
@@ -143,7 +149,7 @@ The application will be available at:
 
 Create `backend/.env` with the following:
 
-```bash
+```env
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/narrative_vaults"
 
@@ -175,7 +181,7 @@ AGENT_LOOP_INTERVAL_MS=30000
 
 Create `frontend/.env.local` with:
 
-```bash
+```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_WS_URL=ws://localhost:3001
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
@@ -186,73 +192,32 @@ NEXT_PUBLIC_CHAIN_ID=998
 
 ## 🏛️ Architecture
 
-
-
 ### System Architecture Diagram
 
 ```mermaid
 graph TB
-    subgraph Frontend["🖥️ FRONTEND"]
-        FE["Next.js 14 + TypeScript + TailwindCSS + Wagmi/Viem"]
+    subgraph Frontend["FRONTEND"]
+        A["Next.js 14 + TypeScript + TailwindCSS + Wagmi/Viem"]
     end
     
-    subgraph API["🔌 API LAYER"]
-        REST["REST API + WebSocket"]
+    subgraph Backend["BACKEND"]
+        B["Node.js + Express + Prisma ORM + Redis"]
+        C["Salt Service (SDK)"]
+        D["Pear Service (API)"]
+        E["Hyperliquid Service"]
     end
     
-    subgraph Backend["⚙️ BACKEND"]
-        BE["Node.js + Express + Prisma ORM + Redis"]
-        
-        subgraph Services["Services"]
-            SALT["Salt Service<br/>(SDK)"]
-            PEAR["Pear Service<br/>(API)"]
-            HYPER["Hyperliquid Service"]
-        end
+    subgraph Hyperliquid["HYPERLIQUID"]
+        F["Perpetual DEX on HyperEVM (Chain ID: 998)"]
     end
     
-    subgraph Blockchain["⛓️ HYPERLIQUID"]
-        CHAIN["Perpetual DEX on HyperEVM<br/>(Chain ID: 998)"]
-    end
-    
-    Frontend -->|REST + WebSocket| API
-    API -->|"Requests"| Backend
-    Backend -->|"Manages"| Services
-    SALT -.->|"Smart Contracts"| CHAIN
-    PEAR -.->|"Trade Execution"| CHAIN
-    HYPER -.->|"Market Data"| CHAIN
-    
-    style Frontend fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
-    style API fill:#fff,stroke:#333,stroke-width:2px
-    style Backend fill:#d4edda,stroke:#28a745,stroke-width:3px
-    style Blockchain fill:#f8d7da,stroke:#dc3545,stroke-width:3px
-    style SALT fill:#b3d9ff,stroke:#0066cc
-    style PEAR fill:#b3d9ff,stroke:#0066cc
-    style HYPER fill:#b3d9ff,stroke:#0066cc
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                            FRONTEND                             │
-│       Next.js 14 + TypeScript + TailwindCSS + Wagmi/Viem        │
-└──────────────────────────────┬───────────────────────────────────────┘
-                             │
-                   REST API + WebSocket
-                             │
-┌──────────────────────────────┴───────────────────────────────────────┐
-│                            BACKEND                              │
-│          Node.js + Express + Prisma ORM + Redis               │
-│                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │ Salt Service │  │ Pear Service │  │ Hyperliquid │  │
-│  │    (SDK)     │  │    (API)     │  │   Service   │  │
-│  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘  │
-└────────────────┴─────────────────┴─────────────────┴─────────────────┘
-                             │
-                             │
-                             │
-                             │
-┌──────────────────────────────┴───────────────────────────────────────┐
-│                         HYPERLIQUID                            │
-│        Perpetual DEX on HyperEVM (Chain ID: 998)               │
-└─────────────────────────────────────────────────────────────────────┘
+    A -->|REST API + WebSocket| B
+    B --> C
+    B --> D
+    B --> E
+    C --> F
+    D --> F
+    E --> F
 ```
 
 For detailed architecture documentation, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -265,39 +230,39 @@ For detailed architecture documentation, see [ARCHITECTURE.md](docs/ARCHITECTURE
 narrative-vaults/
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma          # Database schema
-│   │   └── seed.ts                 # Database seeding
+│   │   ├── schema.prisma       # Database schema
+│   │   └── seed.ts              # Database seeding
 │   ├── src/
-│   │   ├── api/                    # API endpoints
-│   │   ├── agent/                  # Automated trading logic
-│   │   ├── config/                 # Narrative configurations
-│   │   ├── middleware/             # Authentication
-│   │   ├── services/               # Business logic
+│   │   ├── api/                 # API endpoints
+│   │   ├── agent/               # Automated trading logic
+│   │   ├── config/              # Narrative configurations
+│   │   ├── middleware/          # Authentication
+│   │   ├── services/            # Business logic
 │   │   │   ├── salt.service.ts
 │   │   │   ├── pear.service.ts
 │   │   │   ├── hyperliquid.service.ts
 │   │   │   └── xp.service.ts
-│   │   ├── types/                  # TypeScript interfaces
-│   │   └── index.ts                # Entry point
+│   │   ├── types/               # TypeScript interfaces
+│   │   └── index.ts             # Entry point
 │   ├── package.json
 │   └── tsconfig.json
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/             # React components
+│   │   ├── components/          # React components
 │   │   │   ├── VaultCard.tsx
 │   │   │   ├── WalletConnectButton.tsx
 │   │   │   └── XPProgressBar.tsx
-│   │   ├── config/                 # Wallet configuration
-│   │   ├── hooks/                  # Custom hooks
-│   │   ├── pages/                  # Next.js pages
-│   │   └── utils/                  # Utility functions
+│   │   ├── config/              # Wallet configuration
+│   │   ├── hooks/               # Custom hooks
+│   │   ├── pages/               # Next.js pages
+│   │   └── utils/               # Utility functions
 │   ├── package.json
 │   └── tsconfig.json
 │
 ├── docs/
-│   ├── ARCHITECTURE.md         # System architecture
-│   └── API_DOCS.md             # API documentation
+│   ├── ARCHITECTURE.md      # System architecture
+│   └── API_DOCS.md          # API documentation
 │
 └── README.md
 ```
@@ -309,7 +274,7 @@ narrative-vaults/
 ### Earn XP
 
 | Action | XP Reward |
-|--------|---------|
+|--------|----------|
 | Vault profit (per 1%) | 100 XP |
 | Daily holding bonus | 10 XP/day |
 | First depositor bonus | 50 XP |
@@ -318,7 +283,7 @@ narrative-vaults/
 ### Level Up
 
 | Level | XP Required | Unlocks |
-|-------|-------------|---------|  
+|-------|-------------|----------|
 | 1 | 0 | Basic narratives (2x leverage) |
 | 2 | 501 | Medium risk narratives (3x leverage) |
 | 3 | 2,001 | High risk narratives (4x leverage) |
@@ -339,7 +304,10 @@ x-signature: 0x...
 x-timestamp: 1234567890
 ```
 
-The signature is created by signing: `Sign this message to authenticate with Narrative Vaults: {timestamp}`
+The signature is created by signing:
+```
+Sign this message to authenticate with Narrative Vaults: {timestamp}
+```
 
 ### Key Endpoints
 
@@ -401,21 +369,23 @@ For complete API documentation, see [API_DOCS.md](docs/API_DOCS.md).
 ### Available Scripts
 
 **Backend:**
+
 ```bash
-npm run dev         # Start development server
-npm run build       # Build for production
-npm start           # Start production server
-npm run db:migrate  # Run database migrations
-npm run db:seed     # Seed database
-npm run lint        # Run ESLint
+npm run dev       # Start development server
+npm run build     # Build for production
+npm start         # Start production server
+npm run db:migrate # Run database migrations
+npm run db:seed   # Seed database
+npm run lint      # Run ESLint
 ```
 
 **Frontend:**
+
 ```bash
-npm run dev    # Start development server
-npm run build  # Build for production
-npm start      # Start production server
-npm run lint   # Run ESLint
+npm run dev       # Start development server
+npm run build     # Build for production
+npm start         # Start production server
+npm run lint      # Run ESLint
 ```
 
 ### Code Style
@@ -454,9 +424,8 @@ Contributions are welcome! Please follow these steps:
 
 ## 🚀 Built For
 
-
-
 Narrative Vaults was built to showcase the power of combining:
+
 - Salt Protocol's programmable capital
 - Pear Protocol's execution API
 - Hyperliquid's perpetual DEX
@@ -484,19 +453,15 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 Need help? Reach out through:
 
-- **📚 Documentation**: [docs/](docs/)
+- **📚 Documentation**: [docs/](docs)
 - **🐛 Issues**: [GitHub Issues](https://github.com/MasteraSnackin/narrative-vaults/issues)
 - **💬 Discord**: [Join our community](https://discord.gg/narrativevaults)
 - **🐦 Twitter**: [@narrativevaults](https://twitter.com/narrativevaults)
 
 ---
 
-<div align="center">
-
 ### 🌟 Star this repo if you find it useful!
 
 [Website](https://narrativevaults.xyz/) • [Twitter](https://twitter.com/narrativevaults) • [Discord](https://discord.gg/narrativevaults)
 
 Made with ❤️ by the Narrative Vaults team
-
-</div>

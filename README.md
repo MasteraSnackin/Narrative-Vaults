@@ -129,6 +129,30 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 
 ---
 
+## 🎬 Presentation
+
+<div align="center">
+
+### 📊 View Full Presentation
+
+**The Pair Trading Problem & Solution**
+
+[<img src="https://img.shields.io/badge/📊_Download_Presentation-4285F4?style=for-the-badge&logo=google-slides&logoColor=white" alt="Download Presentation">](https://github.com/user-attachments/files/24689966/The-Pair-Trading-Problem.pptx)
+
+*Click above to download the complete PowerPoint presentation covering:*
+- The Problem: Why pair trading is complex for retail traders
+- Our Solution: One-click narrative trading
+- How It Works: 3-step automated process
+- Platform Benefits: Accessible • Safe • Engaging • Real Volume
+- Architecture: Technical implementation details
+
+</div>
+
+[The-Pair-Trading-Problem.pptx](https://github.com/user-attachments/files/24689966/The-Pair-Trading-Problem.pptx)
+
+---
+
+
 ## ✨ Key Features
 
 ### 📈 Narrative-Based Trading

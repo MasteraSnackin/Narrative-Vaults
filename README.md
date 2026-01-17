@@ -187,6 +187,48 @@ NEXT_PUBLIC_CHAIN_ID=998
 ## 🏛️ Architecture
 
 ```
+
+### System Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph Frontend["🖥️ FRONTEND"]
+        FE["Next.js 14 + TypeScript + TailwindCSS + Wagmi/Viem"]
+    end
+    
+    subgraph API["🔌 API LAYER"]
+        REST["REST API + WebSocket"]
+    end
+    
+    subgraph Backend["⚙️ BACKEND"]
+        BE["Node.js + Express + Prisma ORM + Redis"]
+        
+        subgraph Services["Services"]
+            SALT["Salt Service<br/>(SDK)"]
+            PEAR["Pear Service<br/>(API)"]
+            HYPER["Hyperliquid Service"]
+        end
+    end
+    
+    subgraph Blockchain["⛓️ HYPERLIQUID"]
+        CHAIN["Perpetual DEX on HyperEVM<br/>(Chain ID: 998)"]
+    end
+    
+    Frontend -->|REST + WebSocket| API
+    API -->|"Requests"| Backend
+    Backend -->|"Manages"| Services
+    SALT -.->|"Smart Contracts"| CHAIN
+    PEAR -.->|"Trade Execution"| CHAIN
+    HYPER -.->|"Market Data"| CHAIN
+    
+    style Frontend fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style API fill:#fff,stroke:#333,stroke-width:2px
+    style Backend fill:#d4edda,stroke:#28a745,stroke-width:3px
+    style Blockchain fill:#f8d7da,stroke:#dc3545,stroke-width:3px
+    style SALT fill:#b3d9ff,stroke:#0066cc
+    style PEAR fill:#b3d9ff,stroke:#0066cc
+    style HYPER fill:#b3d9ff,stroke:#0066cc
+```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                            FRONTEND                             │
 │       Next.js 14 + TypeScript + TailwindCSS + Wagmi/Viem        │

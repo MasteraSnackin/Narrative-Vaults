@@ -62,7 +62,6 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 1️⃣ **One-Click Deposit** 💰
 - Users deposit funds with a single click
 - Funds are allocated to a Salt Policy Account for secure trading
-- 
 
 <img width="1236" height="781" alt="Apng" src="https://github.com/user-attachments/assets/e5cd4545-06c7-4561-aa52-562a032e8c6a" />
 
@@ -77,6 +76,7 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 - Track progress on social leaderboards
   
 <img width="1078" height="737" alt="C" src="https://github.com/user-attachments/assets/b127ac44-c95d-4880-a6c7-8bb2b2adc9ec" />
+
 
 **Technical Architecture Flow:**
 
@@ -120,7 +120,6 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 
 <img width="1024" height="1024" alt="9e530d87-d9eb-4ab7-8028-6c71f65a2881" src="https://github.com/user-attachments/assets/a6dd3eca-b812-4041-afe7-bb2ea179aa63" />
 
-
 ---
 
 ## 🏗️ Tech Stack
@@ -153,9 +152,7 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 
 </div>
 
-
 ---
-
 
 ## ✨ Key Features
 

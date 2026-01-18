@@ -153,7 +153,6 @@ Narrative Vaults is a **decentralized trading platform** that transforms pair tr
 
 </div>
 
-[The-Pair-Trading-Problem.pptx](https://github.com/user-attachments/files/24689966/The-Pair-Trading-Problem.pptx)
 
 ---
 
